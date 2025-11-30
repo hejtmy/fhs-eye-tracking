@@ -1,0 +1,151 @@
+---
+title: "1. Základní analýza eyetracking dat v R (Tidyverse)"
+author: "Antigravity"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+source("claude.R") # Načtení základních funkcí
+```
+
+# Úvod
+
+Tato vigneta demonstruje základní postupy při analýze dat z oční kamery s využitím moderních balíků `dplyr` a `ggplot2`, v kombinaci s funkcemi z `claude.R`.
+
+## 1. Načtení dat
+
+Načteme data a rovnou je upravíme do vhodného formátu.
+
+```{r load-data}
+# Načtení dat a trialů
+raw_data <- read.csv("data/raw_data.csv")
+trials <- read.csv("data/trials.csv")
+
+# Spojení dat s informacemi o trialech
+df <- raw_data %>%
+  left_join(trials, by = "trial_id") %>%
+  as_tibble()
+
+glimpse(df)
+```
+
+## 2. Předzpracování
+
+Vypočítáme rychlost a vyhladíme ji. Využijeme `group_by` pro výpočet v rámci každého trialu a subjektu.
+
+```{r preprocessing}
+df_processed <- df %>%
+  group_by(subject_id, trial_id) %>%
+  mutate(
+    # Výpočet rychlosti (použijeme funkci z claude.R, ale aplikujeme ji uvnitř mutate)
+    velocity = c(0, calculate_velocity(x, y, timestamp)),
+    
+    # Vyhlazení rychlosti
+    smooth_vel = smooth_velocity(velocity, window_size = 5)
+  ) %>%
+  ungroup()
+
+# Vizualizace rychlosti pro jeden trial pomocí ggplot2
+df_processed %>%
+  filter(subject_id == 1, trial_id == 1) %>%
+  ggplot(aes(x = timestamp, y = smooth_vel)) +
+  geom_line(color = "blue") +
+  theme_minimal() +
+  labs(
+    title = "Rychlost pohybu očí (Trial 1)",
+    x = "Čas (ms)",
+    y = "Rychlost (px/ms)"
+  )
+```
+
+## 3. Detekce fixací
+
+Aplikujeme detekci fixací na každý trial zvlášť.
+
+```{r fixation-detection}
+# Funkce pro aplikaci detekce na skupinu dat
+detect_fixations_wrapper <- function(data) {
+  fix <- detect_fixations_ivt(
+    x = data$x,
+    y = data$y,
+    timestamps = data$timestamp,
+    velocity_threshold = 0.5,
+    min_duration = 100
+  )
+  if (!is.null(fix)) {
+    # Přidáme identifikátory skupiny
+    fix$subject_id <- unique(data$subject_id)
+    fix$trial_id <- unique(data$trial_id)
+    return(fix)
+  }
+  return(NULL)
+}
+
+# Aplikace na všechna data
+fixations <- df_processed %>%
+  group_split(subject_id, trial_id) %>%
+  purrr::map_dfr(detect_fixations_wrapper) %>%
+  as_tibble()
+
+print(head(fixations))
+```
+
+## 4. Vizualizace (Scanpath)
+
+Vytvoříme scanpath plot pomocí `ggplot2`.
+
+```{r visualization}
+# Příprava dat pro vizualizaci jednoho trialu
+trial_fixations <- fixations %>%
+  filter(subject_id == 1, trial_id == 1)
+
+trial_raw <- df_processed %>%
+  filter(subject_id == 1, trial_id == 1)
+
+ggplot() +
+  # Surová data (volitelné, pro kontext)
+  geom_path(data = trial_raw, aes(x = x, y = y), color = "gray80", alpha = 0.5) +
+  
+  # Sakády (čáry mezi fixacemi)
+  geom_path(data = trial_fixations, aes(x = x_centroid, y = y_centroid), color = "gray50") +
+  
+  # Fixace (kruhy, velikost dle trvání)
+  geom_point(data = trial_fixations, aes(x = x_centroid, y = y_centroid, size = duration, color = factor(fixation_id)), alpha = 0.7) +
+  
+  # Čísla fixací
+  geom_text(data = trial_fixations, aes(x = x_centroid, y = y_centroid, label = fixation_id), size = 3, color = "white") +
+  
+  # Nastavení os a vzhledu
+  scale_y_reverse(limits = c(1080, 0)) +
+  scale_x_continuous(limits = c(0, 1920)) +
+  coord_fixed() +
+  theme_minimal() +
+  guides(color = "none", size = "none") +
+  labs(
+    title = "Scanpath - Trial 1",
+    x = "X (px)",
+    y = "Y (px)"
+  )
+```
+
+## 5. Souhrnné statistiky
+
+Vypočítáme průměrné trvání fixací pro každého účastníka pomocí `dplyr`.
+
+```{r summary}
+fix_summary <- fixations %>%
+  group_by(subject_id) %>%
+  summarise(
+    n_fixations = n(),
+    mean_duration = mean(duration),
+    total_duration = sum(duration),
+    mean_dispersion = mean(dispersion)
+  )
+
+print(fix_summary)
+```

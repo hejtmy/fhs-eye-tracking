@@ -1,0 +1,148 @@
+---
+title: "4. Pokročilá vizualizace a analýza (ggplot2 & dplyr)"
+author: "Antigravity"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+```
+
+# Úvod
+
+Tato vigneta se zaměřuje na flexibilní analýzu a vizualizaci pomocí balíků `dplyr` a `ggplot2`. Tento přístup umožňuje plnou kontrolu nad vzhledem grafů a zpracováním dat.
+
+## 1. Načtení a příprava dat
+
+Spojíme surová data s informacemi o trialech.
+
+```{r load-data}
+raw_data <- read.csv("data/raw_data.csv")
+trials <- read.csv("data/trials.csv")
+aois <- read.csv("data/aois.csv")
+
+# Spojení dat (join)
+df <- raw_data %>%
+  left_join(trials, by = "trial_id") %>%
+  mutate(
+    time_sec = timestamp / 1000
+  )
+
+head(df)
+```
+
+## 2. Vizualizace Scanpath (Trajektorie)
+
+Zobrazíme pohyb očí pro vybrané trialy s rozlišením podmínek.
+
+```{r scanpath}
+# Vybereme prvních pár trialů
+df_subset <- df %>% filter(trial_id <= 4)
+
+ggplot(df_subset, aes(x = x, y = y)) +
+  # Obrázek na pozadí (volitelné)
+  # annotation_custom(...) +
+  # Trajektorie
+  geom_path(aes(color = time_sec), size = 0.8, alpha = 0.8) +
+  # Body (vzorky)
+  geom_point(aes(color = time_sec), size = 0.5, alpha = 0.5) +
+  # Hranice obrazovky
+  scale_x_continuous(limits = c(0, 1920), expand = c(0, 0)) +
+  scale_y_reverse(limits = c(1080, 0), expand = c(0, 0)) +
+  # Vzhled
+  scale_color_viridis_c(option = "plasma", name = "Čas (s)") +
+  coord_fixed() +
+  theme_minimal() +
+  labs(
+    title = "Scanpath analýza",
+    subtitle = "Trajektorie pohledu v čase",
+    x = "X (px)",
+    y = "Y (px)"
+  ) +
+  facet_wrap(~ condition + trial_id)
+```
+
+## 3. Heatmapa (Teplotní mapa)
+
+Agregovaná heatmapa pro všechny účastníky v experimentální podmínce.
+
+```{r heatmap}
+df_exp <- df %>% filter(condition == "Experimental")
+
+ggplot(df_exp, aes(x = x, y = y)) +
+  # Heatmapa pomocí 2D hustoty
+  stat_density_2d(aes(fill = ..level..), geom = "polygon", alpha = 0.8) +
+  # Zobrazení AOI
+  geom_circle(data = aois, aes(x0 = x, y0 = y, r = width/2, fill = NA), inherit.aes = FALSE, color = "red", size = 1) +
+  # Nastavení os
+  scale_x_continuous(limits = c(0, 1920), expand = c(0, 0)) +
+  scale_y_reverse(limits = c(1080, 0), expand = c(0, 0)) +
+  scale_fill_viridis_c(option = "inferno") +
+  coord_fixed() +
+  theme_dark() +
+  labs(
+    title = "Heatmapa fixací",
+    subtitle = "Experimentální podmínka"
+  )
+```
+
+*Poznámka: Pro `geom_circle` je třeba balík `ggforce`. Pokud není k dispozici, lze použít `geom_path` s vypočítanými body kruhu.*
+
+## 4. Analýza AOI v čase
+
+Podíváme se, jak se mění vzdálenost od cíle v čase.
+
+```{r aoi-time}
+# Definice cíle (např. střed obrazovky pro jednoduchost, nebo dle AOI)
+target_x <- 960
+target_y <- 540
+
+df_dist <- df %>%
+  mutate(
+    dist_to_center = sqrt((x - target_x)^2 + (y - target_y)^2)
+  ) %>%
+  group_by(trial_id, condition) %>%
+  mutate(
+    # Normalizace času (0 = začátek trialu)
+    time_norm = timestamp - min(timestamp)
+  )
+
+ggplot(df_dist, aes(x = time_norm, y = dist_to_center, color = condition, group = trial_id)) +
+  geom_line(alpha = 0.3) +
+  geom_smooth(aes(group = condition), method = "loess", se = TRUE, size = 1.5) +
+  theme_bw() +
+  labs(
+    title = "Vzdálenost od středu v čase",
+    x = "Čas od začátku trialu (ms)",
+    y = "Vzdálenost (px)"
+  )
+```
+
+## 5. Pupilometrie
+
+Analýza změny velikosti zornice.
+
+```{r pupil}
+# Baseline korekce (prvních 200 ms trialu)
+df_pupil <- df %>%
+  group_by(trial_id) %>%
+  mutate(
+    baseline = mean(pupil[timestamp <= 200], na.rm = TRUE),
+    pupil_change = (pupil - baseline) / baseline * 100 # Procentuální změna
+  ) %>%
+  ungroup()
+
+ggplot(df_pupil, aes(x = timestamp, y = pupil_change, color = condition)) +
+  stat_summary(fun = mean, geom = "line", size = 1) +
+  stat_summary(fun.data = mean_se, geom = "ribbon", alpha = 0.2, aes(fill = condition), color = NA) +
+  theme_classic() +
+  labs(
+    title = "Změna velikosti zornice",
+    y = "% změna oproti baseline",
+    x = "Čas (ms)"
+  )
+```
