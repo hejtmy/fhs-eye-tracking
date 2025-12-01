@@ -146,3 +146,79 @@ ggplot(df_pupil, aes(x = timestamp, y = pupil_change, color = condition)) +
     x = "Čas (ms)"
   )
 ```
+
+## 6. Statistická analýza
+
+Vizualizace nám dává dobrý přehled, ale pro ověření hypotéz potřebujeme statistické testy. Zde si ukážeme základní přístupy: t-test, lineární regresi a ANOVA.
+
+### Příprava dat pro statistiku (Agregace)
+
+Statistické testy obvykle neprovádíme na surových vzorcích (samples), protože ty jsou silně autokorelované. Místo toho agregujeme data na úroveň trialů nebo subjektů.
+
+```{r stats-prep}
+# Agregace dat na úroveň trialu
+trial_summary <- df %>%
+  group_by(trial_id, condition) %>%
+  summarise(
+    mean_pupil = mean(pupil, na.rm = TRUE),
+    mean_dist = mean(sqrt((x - 960)^2 + (y - 540)^2), na.rm = TRUE),
+    total_time = max(timestamp) - min(timestamp),
+    .groups = "drop"
+  )
+
+head(trial_summary)
+```
+
+### T-test
+
+Porovnáme průměrnou velikost zornice mezi dvěma podmínkami.
+
+```{r t-test}
+# Nezávislý t-test (pokud máme různé subjekty v podmínkách, zde pro ilustraci)
+# V reálu bychom spíše použili párový t-test nebo mixed models, pokud jde o within-subject design.
+
+t_test_result <- t.test(mean_pupil ~ condition, data = trial_summary)
+print(t_test_result)
+
+# Vizualizace výsledku (boxplot)
+ggplot(trial_summary, aes(x = condition, y = mean_pupil, fill = condition)) +
+  geom_boxplot(alpha = 0.5) +
+  geom_jitter(width = 0.2, alpha = 0.5) +
+  theme_minimal() +
+  labs(title = "Porovnání velikosti zornice dle podmínky")
+```
+
+### Lineární regrese
+
+Zkoumáme vliv pořadí trialu na průměrnou vzdálenost od středu.
+
+```{r regression}
+lm_model <- lm(mean_dist ~ trial_id + condition, data = trial_summary)
+summary(lm_model)
+
+# Vizualizace modelu
+ggplot(trial_summary, aes(x = trial_id, y = mean_dist, color = condition)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE) +
+  theme_minimal() +
+  labs(title = "Regrese: Vzdálenost od středu v průběhu experimentu")
+```
+
+### ANOVA
+
+Pokud bychom měli více než dvě podmínky, použijeme ANOVA. Zde pro ilustraci vytvoříme fiktivní třetí skupinu.
+
+```{r anova}
+# Vytvoření fiktivní 3. skupiny pro demonstraci
+trial_summary_3grp <- trial_summary %>%
+  mutate(
+    group_factor = sample(c("A", "B", "C"), size = n(), replace = TRUE)
+  )
+
+anova_model <- aov(mean_pupil ~ group_factor, data = trial_summary_3grp)
+summary(anova_model)
+
+# Tukey HSD post-hoc test
+TukeyHSD(anova_model)
+```
+```
