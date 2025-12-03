@@ -41,3 +41,8 @@ vignettes/*.pdf
 
 # MacOS
 .DS_Store
+
+/.quarto/
+**/*.quarto_ipynb
+
+_site/

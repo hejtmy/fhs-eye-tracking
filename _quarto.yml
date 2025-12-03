@@ -1,0 +1,26 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "FHS Eye Tracking Analysis"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: vignette_01_zakladni_analyza.qmd
+        text: "01: Základní analýza"
+      - href: vignette_02_eyetools.qmd
+        text: "02: Eyetools"
+      - href: vignette_03_metodika.qmd
+        text: "03: Metodika"
+      - href: vignette_04_realna_data.qmd
+        text: "04: Reálná data"
+      - href: vignette_05_pokrocila_analyza.qmd
+        text: "05: Pokročilá analýza"
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true

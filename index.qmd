@@ -1,0 +1,15 @@
+---
+title: "FHS Eye Tracking Analysis"
+---
+
+Vítejte na stránkách projektu analýzy eye-trackingových dat.
+
+Tento web obsahuje sérii vinět (vignettes), které vás provedou procesem zpracování a analýzy dat z oční kamery.
+
+## Obsah
+
+*   [**01: Základní analýza**](vignette_01_zakladni_analyza.qmd) - Úvod do načítání a základní vizualizace dat.
+*   [**02: Eyetools**](vignette_02_eyetools.qmd) - Představení balíčku `eyetools` a jeho funkcí.
+*   [**03: Metodika**](vignette_03_metodika.qmd) - Metodologické aspekty eye-trackingového výzkumu.
+*   [**04: Reálná data**](vignette_04_realna_data.qmd) - Práce s reálnými daty z experimentů.
+*   [**05: Pokročilá analýza**](vignette_05_pokrocila_analyza.qmd) - Pokročilé techniky analýzy, včetně přechodových matic a porovnávání skupin.
