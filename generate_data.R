@@ -26,34 +26,34 @@ aois <- list(
 generate_trial <- function(subject_id, trial_id) {
   n_samples <- (trial_duration / 1000) * sampling_rate
   timestamps <- seq(0, trial_duration, length.out = n_samples)
-  
+
   # Start at center
   current_x <- screen_width / 2
   current_y <- screen_height / 2
-  
+
   x <- numeric(n_samples)
   y <- numeric(n_samples)
   pupil <- numeric(n_samples)
-  
+
   # Simulate fixations and saccades
   state <- "fixation"
   state_duration <- 0
   target_x <- current_x
   target_y <- current_y
-  
+
   for (i in 1:n_samples) {
     if (state == "fixation") {
       # Add noise
       x[i] <- current_x + rnorm(1, 0, 5)
       y[i] <- current_y + rnorm(1, 0, 5)
-      
+
       state_duration <- state_duration + (1000/sampling_rate)
-      
+
       # Chance to switch to saccade
       if (state_duration > 300 && runif(1) < 0.05) {
         state <- "saccade"
         state_duration <- 0
-        
+
         # Pick a target (AOI or random)
         if (runif(1) < 0.7) {
           target_aoi <- aois[[sample(length(aois), 1)]]
@@ -69,7 +69,7 @@ generate_trial <- function(subject_id, trial_id) {
       dx <- target_x - current_x
       dy <- target_y - current_y
       dist <- sqrt(dx^2 + dy^2)
-      
+
       if (dist < 20) {
         state <- "fixation"
         current_x <- target_x
@@ -85,11 +85,11 @@ generate_trial <- function(subject_id, trial_id) {
         y[i] <- current_y
       }
     }
-    
+
     # Simulate pupil (baseline + random walk)
     pupil[i] <- 3000 + sin(i/50) * 100 + rnorm(1, 0, 10)
   }
-  
+
   data.frame(
     subject_id = subject_id,
     trial_id = trial_id,
@@ -137,5 +137,3 @@ aoi_df <- data.frame(
   height = c(100, 100) # radius
 )
 write.csv(aoi_df, "data/aois.csv", row.names = FALSE)
-
-cat("Data generation complete.\n")

@@ -10,23 +10,21 @@ knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(ggplot2)
 library(tidyr)
-source("claude.R") # Načtení základních funkcí
+source("eyetracker.R") # Načtení základních funkcí
 ```
 
 # Úvod
 
-Tato vigneta demonstruje základní postupy při analýze dat z oční kamery s využitím moderních balíků `dplyr` a `ggplot2`, v kombinaci s funkcemi z `claude.R`.
+Tato vigneta demonstruje základní postupy při analýze dat z oční kamery s využitím moderních balíků `dplyr` a `ggplot2`, v kombinaci s funkcemi z `eyetracker.R`.
 
 ## 1. Načtení dat
 
 Načteme data a rovnou je upravíme do vhodného formátu.
 
 ```{r load-data}
-# Načtení dat a trialů
 raw_data <- read.csv("data/raw_data.csv")
 trials <- read.csv("data/trials.csv")
 
-# Spojení dat s informacemi o trialech
 df <- raw_data %>%
   left_join(trials, by = "trial_id") %>%
   as_tibble()
@@ -47,7 +45,6 @@ df_processed <- df %>%
   ) %>%
   ungroup()
 
-# Vizualizace rychlosti pro jeden trial pomocí ggplot2
 df_processed %>%
   filter(subject_id == 1, trial_id == 1) %>%
   ggplot(aes(x = timestamp, y = smooth_vel)) +
@@ -65,7 +62,6 @@ df_processed %>%
 Aplikujeme detekci fixací na každý trial zvlášť.
 
 ```{r fixation-detection}
-# Funkce pro aplikaci detekce na skupinu dat
 detect_fixations_wrapper <- function(data) {
   fix <- detect_fixations_ivt(
     x = data$x,
@@ -104,35 +100,8 @@ trial_fixations <- fixations %>%
 trial_raw <- df_processed %>%
   filter(subject_id == 1, trial_id == 1)
 
-ggplot() +
-  # Surová data (volitelné, pro kontext)
-  geom_path(data = trial_raw, aes(x = x, y = y), 
-            color = "gray80", alpha = 0.5) +
-
-  # Sakády (čáry mezi fixacemi)
-  geom_path(data = trial_fixations, aes(x = x_centroid, y = y_centroid),
-            color = "gray50") +
-  # Fixace (kruhy, velikost dle trvání)
-  geom_point(data = trial_fixations,
-             aes(x = x_centroid, y = y_centroid, size = duration, color = factor(fixation_id)), 
-             alpha = 0.7) +
-
-  # Čísla fixací
-  geom_text(data = trial_fixations,
-            aes(x = x_centroid, y = y_centroid, label = fixation_id),
-            size = 3, color = "white") +
-
-  # Nastavení os a vzhledu
-  scale_y_reverse(limits = c(1080, 0)) +
-  scale_x_continuous(limits = c(0, 1920)) +
-  coord_fixed() +
-  theme_minimal() +
-  guides(color = "none", size = "none") +
-  labs(
-    title = "Scanpath - Trial 1",
-    x = "X (px)",
-    y = "Y (px)"
-  )
+plot_scanpath(trial_raw, trial_fixations, 
+               main = "Scanpath - Subjekt 1, Trial 1")
 ```
 
 ## 5. Souhrnné statistiky

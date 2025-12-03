@@ -1,0 +1,186 @@
+---
+title: "5. Metodika a porovnání algoritmů (eyetools)"
+author: "Antigravity"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# Pokud nemáte nainstalovaný balík eyetools, odkomentujte následující řádek:
+# devtools::install_github("tombeesley/eyetools")
+library(eyetools)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+```
+
+# Úvod
+
+V této vignetě se zaměříme na metodologické aspekty analýzy očních pohybů. Výběr algoritmů pro detekci fixací a jejich parametrů může mít zásadní vliv na výsledky studie. Ukážeme si, jak používat pokročilé nástroje z balíku `eyetools` pro:
+
+1.  **Předzpracování dat** (interpolace a vyhlazování).
+2.  **Porovnání algoritmů** (Dispersion vs. Velocity-Threshold).
+3.  **Analýzu sekvencí** (přechody mezi oblastmi zájmu).
+
+## 1. Načtení a příprava dat
+
+Načteme naše data. Balík `eyetools` vyžaduje specifickou strukturu dat pro některé funkce (obvykle sloupce `time`, `x`, `y`, `trial`).
+
+```{r load-data}
+# Načtení dat
+raw_data <- read.csv("data/raw_data.csv")
+trials <- read.csv("data/trials.csv")
+aois <- read.csv("data/aois.csv")
+
+# Spojení pro kontext (pokud bude potřeba)
+df <- raw_data %>%
+  left_join(trials, by = "trial_id")
+
+# Pro eyetools připravíme data frame s potřebnými sloupci
+# eyetools často očekává 'trial' sloupec, ne 'trial_id', přejmenujeme pro jistotu
+et_data <- raw_data %>%
+  rename(
+    trial = trial_id,
+    subject = subject_id
+  ) %>%
+  select(time = timestamp, x, y, trial, pID = subject)
+
+aoi_sets <- read.csv("data/aois.csv") %>%
+  select(x, y, width_radius = width, height)
+aoi_names <- read.csv("data/aois.csv") %>%
+  pull(aoi_name)
+
+head(et_data)
+```
+
+## 2. Předzpracování (Preprocessing)
+
+Surová data z oční kamery často obsahují šum nebo krátké výpadky (mrkání).
+
+### Interpolace
+
+Funkce `interpolate()` umožňuje doplnit chybějící data (NA), pokud výpadek nepřesahuje určitou délku (`max_gap`).
+
+```{r interpolate}
+# Simulace dat s chybějícími hodnotami pro demonstraci
+data_with_gaps <- et_data
+set.seed(123)
+na_indices <- sample(seq_len(nrow(data_with_gaps)), 1000)
+data_with_gaps$x[na_indices] <- NA
+data_with_gaps$y[na_indices] <- NA
+```
+
+```{r visualize-data-with-gaps}
+data_with_gaps %>%
+  filter(trial == 1, pID == 1) %>%
+  ggplot(aes(x = time, y = x)) +
+  geom_line() +
+  geom_point(aes(color = is.na(x))) +
+  scale_color_manual(values = c("blue", "red")) +
+  labs(title = "Data s chybějícími hodnotami")
+```
+
+```{r interpolate}
+# Interpolace mezer kratších než 50 ms (příklad)
+# Poznámka: reportuje počet interpolovaných vzorků
+data_interp <- interpolate(data_with_gaps, maxgap = 500)
+data_interp %>%
+  filter(trial == 1, pID == 1) %>%
+  ggplot(aes(x = time, y = x)) +
+  geom_line() +
+  geom_point(aes(color = is.na(x))) +
+  scale_color_manual(values = c("blue", "red")) +
+  labs(title = "Interpolované data")
+```
+
+### Vyhlazování (Smoothing)
+
+Funkce `smoother()` aplikuje klouzavý průměr (nebo jinou metodu) pro redukci šumu. To je užitečné zejména pro algoritmy založené na rychlosti (I-VT).
+
+```{r smooth}
+data_smooth <- smoother(et_data, span = 0.05, plot = TRUE)
+
+data_smooth <- smoother(et_data, span = 0.1, plot = TRUE)
+
+data_smooth <- smoother(et_data, span = 0.5, plot = TRUE)
+```
+
+
+### Distancee to visual angle
+
+```{r distance-to-visual-angle}
+dist_to_visual_angle(1920,
+  dist_type = "pixel",
+  view_dist_cm = 60,
+  screen_width_cm = 51,
+  screen_width_pixels = 1920
+)
+```
+
+
+
+
+
+## 3. Porovnání algoritmů detekce fixací
+
+https://tombeesley.github.io/eyetools/reference/fixation_dispersion.html
+```{r dispersion-fixations}
+fixation_dispersion(
+  et_data,
+  min_dur = 150,
+  disp_tol = 100,
+  NA_tol = 0.25,
+  progress = TRUE
+)
+```
+
+
+Druhý algoritmus je založen na rychlostním prahu (I-VT).
+
+```{r velocity-fixations}
+fixation_VTI(
+  et_data,
+  sample_rate = NULL,
+  threshold = 100,
+  min_dur = 150,
+  min_dur_sac = 20,
+  disp_tol = 100,
+  smooth = FALSE,
+  progress = TRUE
+)
+
+```
+
+Různé algoritmy mohou identifikovat fixace odlišně. `eyetools` nabízí funkci `compare_algorithms()`, která spustí jak disperzní (I-DT), tak rychlostní (I-VT) algoritmus na stejných datech.
+
+
+**Pozor:** Algoritmus I-VT (Velocity-Threshold Identification) vyžaduje práh rychlosti (`threshold`). Pokud jsou data v pixelech, je třeba brát v úvahu, že rychlost bude v px/s (nebo px/ms). Standardní hodnota 100 (stupňů/s) nemusí odpovídat pixelům. Zde použijeme parametry vhodné pro pixely.
+
+```{r compare-algos, fig.width=10, fig.height=6}
+# Spustíme porovnání pro jeden subjekt (zde máme data jednoho subjektu, trial je rozlišovač)
+# Pokud máme více subjektů, museli bychom filtrovat nebo použít group_by.
+# Zde předpokládáme, že 'et_data' je jeden subjekt.
+
+# Nastavíme parametry:
+# disp_tol: tolerance disperze v pixelech (např. 50 px)
+# min_dur: minimální trvání fixace (např. 150 ms)
+# threshold: pro I-VT, zkusíme vyšší hodnotu pro pixely (např. 1000 px/s), nebo ponecháme default pokud data převedeme.
+# Pro demonstraci použijeme defaultní hodnoty, ale v reálu je nutné je ladit.
+data("HCL", package = "eyetools")
+df_hcl <- combine_eyes(HCL)
+comparison <- compare_algorithms(
+  df_hcl,
+  disp_tol = 50,    # Tolerance rozptylu
+  min_dur = 150,    # Min délka fixace
+  threshold = 200,  # Rychlostní práh
+  plot_fixations = TRUE, 
+  print_summary = TRUE
+)
+
+# Výsledek obsahuje fixace z obou metod
+# Pro jistotu vypíšeme strukturu, abychom viděli názvy prvků v listu
+str(comparison, max.level = 1)
+comparison$correlations
+```
+

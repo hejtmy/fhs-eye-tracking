@@ -1,3 +1,6 @@
 "aoi_name","type","x","y","width","height"
-"Target","circle",960,540,100,100
-"Distractor","circle",400,400,100,100
+"Target","circle",960,540,150,150
+"Distractor","circle",400,400,150,150
+"Distractor2", "circle",1520,540,200,200
+"Distractor3", "circle",1100,850,200,200
+"Screen","rectangle",960,540,1920,1080

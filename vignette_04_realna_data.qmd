@@ -69,7 +69,7 @@ Pro odstranění šumu a jemných sakád použijeme funkci `smoother()`.
 df_smooth <- smoother(df_interp, span = 0.02, plot = FALSE)
 
 # Ukázka vyhlazení (vykreslíme pro kontrolu)
-# smoother(df_interp, span = 0.02, plot = TRUE)
+smoother(df_interp, span = 0.02, plot = TRUE)
 ```
 
 ## 3. Detekce fixací
@@ -77,10 +77,7 @@ df_smooth <- smoother(df_interp, span = 0.02, plot = FALSE)
 Nyní detekujeme fixace pomocí disperzního algoritmu (`fixation_dispersion`).
 
 ```{r fixations}
-# Detekce fixací
-# disp_tol: tolerance rozptylu v pixelech
-# min_dur: minimální trvání fixace v ms
-fixations <- fixation_dispersion(df_smooth, disp_tol = 50, min_dur = 100)
+fixations <- fixation_dispersion(df_smooth, disp_tol = 100, min_dur = 150)
 
 # Výsledek je list data framů, spojíme je pro snazší práci
 fixations_df <- bind_rows(fixations) %>%
@@ -102,8 +99,6 @@ colnames(AOI_areas) <- c("x", "y", "width_radius", "height")
 AOI_areas[1,] <- c(460, 840, 400, 300)   # Levý podnět
 AOI_areas[2,] <- c(1460, 840, 400, 300)  # Pravý podnět
 AOI_areas[3,] <- c(960, 270, 300, 500)   # Odpovědi
-
-print(AOI_areas)
 ```
 
 Spočítáme čas strávený v jednotlivých AOI pro každý trial.
@@ -111,7 +106,6 @@ Spočítáme čas strávený v jednotlivých AOI pro každý trial.
 ```{r aoi-analysis}
 # Výpočet času v AOI z fixací
 aoi_results <- AOI_time(data = fixations, data_type = "fix", AOIs = AOI_areas)
-
 print(head(aoi_results))
 
 # Vizualizace výsledků AOI
@@ -125,8 +119,6 @@ aoi_results %>%
 ```
 
 ## 5. Vizualizace
-
-Balík `eyetools` nabízí funkce pro vizualizaci trajektorií a fixací.
 
 ### Sekvenční plot (`plot_seq`)
 

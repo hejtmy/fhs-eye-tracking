@@ -371,4 +371,30 @@ summary(anova_model)
 # Tukey HSD post-hoc test
 TukeyHSD(anova_model)
 ```
+
+## 4. Analýza sekvencí (Sequence Analysis)
+
+Další pokročilou metodou je analýza pořadí, v jakém účastník navštěvuje oblasti zájmu (AOI). Funkce `AOI_seq()` převede souřadnice na sekvenci navštívených AOI.
+
+```{r seq-analysis}
+fix_aoi <- AOI_seq(
+  fixation_dispersion(et_data, disp_tol = 50, min_dur = 100),
+  AOIs = aoi_sets[1:4,],
+  AOI_names = aoi_names[1:4]
+)
+fix_aoi
+# Přechodová matice (Transition Matrix)
+transition_matrix <- table(fix_aoi$AOI, lead(fix_aoi$AOI))
+print(transition_matrix)
+
+# Vizualizace sekvencí (Sequence Plot)
+# eyetools::plot_seq(seq_data) # Pokud bychom měli výstup z AOI_seq
+
+# Alternativní vizualizace pomocí ggplot
+ggplot(fix_aoi, aes(x = start, y = AOI, color = AOI)) +
+  geom_point(size = 3) +
+  geom_segment(aes(xend = end, yend = AOI), size = 2) +
+  facet_grid(rows = vars(pID), cols = vars(trial)) +
+  labs(title = "Sekvence návštěv AOI v čase", x = "Čas (ms)", y = "AOI") +
+  theme_minimal()
 ```
