@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.26">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Antigravity">
+<meta name="dcterms.date" content="2025-12-03">
+
+<title>2. Analýza pomocí balíku eyetools (Tidyverse) – FHS Eye Tracking Analysis</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-2a12e044340f79bad0d75c7561fedc86.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-e31584831b205ffbb2d98406f31c2a5b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">FHS Eye Tracking Analysis</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./vignette_01_zakladni_analyza.html"> 
+<span class="menu-text">01: Základní analýza</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="./vignette_02_eyetools.html" aria-current="page"> 
+<span class="menu-text">02: Eyetools</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./vignette_03_metodika.html"> 
+<span class="menu-text">03: Metodika</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./vignette_04_realna_data.html"> 
+<span class="menu-text">04: Reálná data</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./vignette_05_pokrocila_analyza.html"> 
+<span class="menu-text">05: Pokročilá analýza</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#úvod" id="toc-úvod" class="nav-link active" data-scroll-target="#úvod">Úvod</a>
+  <ul class="collapse">
+  <li><a href="#příprava-dat" id="toc-příprava-dat" class="nav-link" data-scroll-target="#příprava-dat">1. Příprava dat</a></li>
+  <li><a href="#detekce-fixací" id="toc-detekce-fixací" class="nav-link" data-scroll-target="#detekce-fixací">2. Detekce fixací</a></li>
+  <li><a href="#vizualizace" id="toc-vizualizace" class="nav-link" data-scroll-target="#vizualizace">3. Vizualizace</a>
+  <ul class="collapse">
+  <li><a href="#heatmapa" id="toc-heatmapa" class="nav-link" data-scroll-target="#heatmapa">Heatmapa</a></li>
+  </ul></li>
+  <li><a href="#analýza-aoi-area-of-interest" id="toc-analýza-aoi-area-of-interest" class="nav-link" data-scroll-target="#analýza-aoi-area-of-interest">4. Analýza AOI (Area of Interest)</a></li>
+  </ul></li>
+  <li><a href="#vizualizace-výsledků" id="toc-vizualizace-výsledků" class="nav-link" data-scroll-target="#vizualizace-výsledků">Vizualizace výsledků</a></li>
+  <li><a href="#aoi-sequence-analysis" id="toc-aoi-sequence-analysis" class="nav-link" data-scroll-target="#aoi-sequence-analysis">AOI Sequence Analysis</a></li>
+  <li><a href="#sakády" id="toc-sakády" class="nav-link" data-scroll-target="#sakády">Sakády</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">2. Analýza pomocí balíku eyetools (Tidyverse)</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Antigravity </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">December 3, 2025</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="úvod" class="level1">
+<h1>Úvod</h1>
+<p>Balík <code>eyetools</code> poskytuje sadu funkcí pro zpracování a vizualizaci eyetrackingových dat. V této vignetě si ukážeme, jak využít jeho analytické funkce, ale výsledky vizualizovat pomocí <code>ggplot2</code> pro větší flexibilitu.</p>
+<section id="příprava-dat" class="level2">
+<h2 class="anchored" data-anchor-id="příprava-dat">1. Příprava dat</h2>
+<p><code>eyetools</code> vyžaduje specifické názvy sloupců: <code>pID</code>, <code>trial_values</code>, <code>time</code>, <code>x</code>, <code>y</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Načtení našich vygenerovaných dat</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>raw_data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"data/raw_data.csv"</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>et_data <span class="ot">&lt;-</span> raw_data <span class="sc">%&gt;%</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">pID =</span> subject_id,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">trial =</span> trial_id,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">experiment_time =</span> time,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">time =</span> timestamp,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(pID, trial, time, x, y)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>aoi_sets <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"data/aois.csv"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(x, y, <span class="at">width_radius =</span> width, height)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>aoi_names <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"data/aois.csv"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(aoi_name)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(et_data)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 4,500
+Columns: 5
+$ pID   &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
+$ trial &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
+$ time  &lt;dbl&gt; 0.00000, 16.72241, 33.44482, 50.16722, 66.88963, 83.61204, 100.3…
+$ x     &lt;dbl&gt; 957.1976, 960.3525, 962.3046, 957.7717, 962.0039, 968.9346, 963.…
+$ y     &lt;dbl&gt; 538.8491, 540.6464, 533.6747, 546.1204, 540.5534, 542.4893, 537.…</code></pre>
+</div>
+</div>
+</section>
+<section id="detekce-fixací" class="level2">
+<h2 class="anchored" data-anchor-id="detekce-fixací">2. Detekce fixací</h2>
+<p>Použijeme funkci <code>fixation_dispersion</code> (algoritmus I-DT).</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Detekce fixací</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>fixations <span class="ot">&lt;-</span> <span class="fu">fixation_dispersion</span>(et_data, <span class="at">disp_tol =</span> <span class="dv">50</span>, <span class="at">min_dur =</span> <span class="dv">100</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Výsledek je list, převedeme ho na data frame pro snadnější práci v ggplot2</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>fixations</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    pID trial fix_n     start       end  duration    x    y prop_NA min_dur
+1     1     1     1    0.0000  752.5084  752.5084  961  540       0     100
+2     1     1     2  903.0100 1003.3445  100.3344 1367  670       0     100
+3     1     1     3 1020.0669 1638.7960  618.7291 1401  680       0     100
+4     1     1     4 1806.0201 1939.7993  133.7793 1001  566       0     100
+5     1     1     5 1956.5217 2324.4147  367.8930  982  557       0     100
+6     1     1     6 2341.1371 2775.9197  434.7826  963  512       0     100
+7     1     1     7 2792.6421 3595.3177  802.6756  977  541       0     100
+8     1     1     8 3762.5418 3862.8763  100.3344  464  382       0     100
+9     1     1     9 3879.5987 4565.2174  685.6187  430  372       0     100
+10    1     1    10 4581.9398 5000.0000  418.0602  384  356       0     100
+11    1     2     1    0.0000  384.6154  384.6154  962  540       0     100
+12    1     2     2  551.8395  652.1739  100.3344  425  423       0     100
+13    1     2     3  668.8963 1705.6856 1036.7893  389  413       0     100
+14    1     2     4 1973.2441 2257.5251  284.2809 1834 1014       0     100
+15    1     2     5 2274.2475 2692.3077  418.0602 1841 1019       0     100
+16    1     2     6 2926.4214 3177.2575  250.8361  986  546       0     100
+17    1     2     7 3193.9799 3545.1505  351.1706  977  543       0     100
+18    1     2     8 3695.6522 3812.7090  117.0569  762  755       0     100
+19    1     2     9 3829.4314 4966.5552 1137.1237  747  767       0     100
+20    1     3     1    0.0000  836.1204  836.1204  961  541       0     100
+21    1     3     2 1053.5117 1204.0134  150.5017 1743  658       0     100
+22    1     3     3 1220.7358 1488.2943  267.5585 1756  665       0     100
+23    1     3     4 1705.6856 1806.0201  100.3344  966  554       0     100
+24    1     3     5 1822.7425 2307.6923  484.9498  946  551       0     100
+25    1     3     6 2525.0836 2658.8629  133.7793 1601   64       0     100
+26    1     3     7 2675.5853 3043.4783  367.8930 1618   50       0     100
+27    1     3     8 3294.3144 3394.6488  100.3344  427  394       0     100
+28    1     3     9 3411.3712 3729.0970  317.7258  406  401       0     100
+29    1     3    10 3913.0435 4080.2676  167.2241  928  563       0     100
+30    1     3    11 4096.9900 5000.0000  903.0100  944  567       0     100
+31    1     4     1    0.0000  668.8963  668.8963  960  540       0     100
+32    1     4     2  836.1204  936.4548  100.3344  419  395       0     100
+33    1     4     3  953.1773 2658.8629 1705.6856  374  369       0     100
+34    1     4     4 2675.5853 3361.2040  685.6187  411  423       0     100
+35    1     4     5 3561.8729 3745.8194  183.9465  950  559       0     100
+36    1     4     6 3762.5418 4197.3244  434.7826  958  558       0     100
+37    1     4     7 4214.0468 5000.0000  785.9532  961  488       0     100
+38    1     5     1    0.0000  652.1739  652.1739  959  541       0     100
+39    1     5     2  819.3980  919.7324  100.3344  435  402       0     100
+40    1     5     3  936.4548 1722.4080  785.9532  401  394       0     100
+41    1     5     4 1956.5217 2073.5786  117.0569 1404  473       0     100
+42    1     5     5 2090.3010 2541.8060  451.5050 1424  475       0     100
+43    1     5     6 2775.9197 2909.6990  133.7793  412  376       0     100
+44    1     5     7 2926.4214 3377.9264  451.5050  396  374       0     100
+45    1     5     8 3578.5953 3678.9298  100.3344 1145  796       0     100
+46    1     5     9 3695.6522 4163.8796  468.2274 1175  815       0     100
+47    1     5    10 4297.6589 4397.9933  100.3344  986  540       0     100
+48    1     5    11 4414.7157 4866.2207  451.5050  965  511       0     100
+49    2     1     1    0.0000  919.7324  919.7324  971  543       0     100
+50    2     1     2 1086.9565 1187.2910  100.3344  447  419       0     100
+51    2     1     3 1204.0134 1521.7391  317.7258  413  410       0     100
+52    2     1     4 1705.6856 1806.0201  100.3344  941  538       0     100
+53    2     1     5 1822.7425 2107.0234  284.2809  964  540       0     100
+54    2     1     6 2274.2475 2374.5819  100.3344  435  388       0     100
+55    2     1     7 2391.3043 3043.4783  652.1739  400  378       0     100
+56    2     1     8 3210.7023 3311.0368  100.3344  924  528       0     100
+57    2     1     9 3327.7592 3812.7090  484.9498  957  537       0     100
+58    2     1    10 3979.9331 4080.2676  100.3344  420  418       0     100
+59    2     1    11 4096.9900 4765.8863  668.8963  385  407       0     100
+60    2     1    12 4782.6087 5000.0000  217.3913  398  363       0     100
+61    2     2     1    0.0000 1020.0669 1020.0669  960  543       0     100
+62    2     2     2 1237.4582 1404.6823  167.2241 1720  910       0     100
+63    2     2     3 1421.4047 1872.9097  451.5050 1734  920       0     100
+64    2     2     4 2107.0234 2424.7492  317.7258 1322   19       0     100
+65    2     2     5 2441.4716 2876.2542  434.7826 1318   12       0     100
+66    2     2     6 3043.4783 3143.8127  100.3344  779  225       0     100
+67    2     2     7 3160.5351 3628.7625  468.2274  744  239       0     100
+68    2     2     8 3762.5418 3862.8763  100.3344  434  400       0     100
+69    2     2     9 3879.5987 4197.3244  317.7258  402  418       0     100
+70    2     2    10 4364.5485 4464.8829  100.3344  945  543       0     100
+71    2     2    11 4481.6054 4816.0535  334.4482  980  549       0     100
+72    2     3     1    0.0000  418.0602  418.0602  961  540       0     100
+73    2     3     2  585.2843  685.6187  100.3344  427  421       0     100
+74    2     3     3  702.3411 1571.9064  869.5652  391  415       0     100
+75    2     3     4 1739.1304 1839.4649  100.3344  932  526       0     100
+76    2     3     5 1856.1873 2173.9130  317.7258  967  533       0     100
+77    2     3     6 2341.1371 2441.4716  100.3344  407  391       0     100
+78    2     3     7 2458.1940 2926.4214  468.2274  372  382       0     100
+79    2     3     8 3093.6455 3193.9799  100.3344  922  555       0     100
+80    2     3     9 3210.7023 4130.4348  919.7324  957  566       0     100
+81    2     3    10 4264.2140 4364.5485  100.3344  779  274       0     100
+82    2     3    11 4381.2709 4765.8863  384.6154  760  243       0     100
+83    2     3    12 4899.6656 5000.0000  100.3344  447  371       0     100
+84    2     4     1    0.0000  685.6187  685.6187  960  541       0     100
+85    2     4     2  852.8428  953.1773  100.3344  433  425       0     100
+86    2     4     3  969.8997 1304.3478  334.4482  398  417       0     100
+87    2     4     4 1521.7391 1655.5184  133.7793 1071  898       0     100
+88    2     4     5 1672.2408 2056.8562  384.6154 1085  910       0     100
+89    2     4     6 2257.5251 2357.8595  100.3344  403  386       0     100
+90    2     4     7 2374.5819 3127.0903  752.5084  377  363       0     100
+91    2     4     8 3344.4816 3444.8161  100.3344 1446  245       0     100
+92    2     4     9 3461.5385 3979.9331  518.3946 1481  241       0     100
+93    2     4    10 4113.7124 4214.0468  100.3344 1584  463       0     100
+94    2     4    11 4230.7692 4832.7759  602.0067 1593  483       0     100
+95    2     4    12 4866.2207 5000.0000  133.7793 1543  552       0     100
+96    2     5     1    0.0000  652.1739  652.1739  961  539       0     100
+97    2     5     2  836.1204  986.6221  150.5017  446  388       0     100
+98    2     5     3 1003.3445 1354.5151  351.1706  428  380       0     100
+99    2     5     4 1538.4615 1705.6856  167.2241  947  530       0     100
+100   2     5     5 1722.4080 3394.6488 1672.2408  966  547       0     100
+101   2     5     6 3411.3712 5000.0000 1588.6288  958  525       0     100
+102   3     1     1    0.0000  936.4548  936.4548  958  532       0     100
+103   3     1     2  953.1773 1722.4080  769.2308  944  578       0     100
+104   3     1     3 1906.3545 2006.6890  100.3344 1604  768       0     100
+105   3     1     4 2023.4114 2692.3077  668.8963 1637  778       0     100
+106   3     1     5 2876.2542 2976.5886  100.3344  994  529       0     100
+107   3     1     6 2993.3110 3344.4816  351.1706  960  515       0     100
+108   3     1     7 3444.8161 4197.3244  752.5084  901  358       0     100
+109   3     1     8 4297.6589 4565.2174  267.5585  992  532       0     100
+110   3     1     9 4581.9398 5000.0000  418.0602  994  542       0     100
+111   3     2     1    0.0000  852.8428  852.8428  960  541       0     100
+112   3     2     2 1020.0669 1120.4013  100.3344  413  394       0     100
+113   3     2     3 1137.1237 2073.5786  936.4548  382  393       0     100
+114   3     2     4 2090.3010 2408.0268  317.7258  408  399       0     100
+115   3     2     5 2591.9732 2692.3077  100.3344  935  510       0     100
+116   3     2     6 2709.0301 3913.0435 1204.0134  955  504       0     100
+117   3     2     7 3929.7659 4264.2140  334.4482  939  526       0     100
+118   3     2     8 4431.4381 4531.7726  100.3344  409  386       0     100
+119   3     2     9 4548.4950 5000.0000  451.5050  377  378       0     100
+120   3     3     1    0.0000  551.8395  551.8395  962  536       0     100
+121   3     3     2  568.5619 1070.2341  501.6722  987  514       0     100
+122   3     3     3 1237.4582 1337.7926  100.3344  447  419       0     100
+123   3     3     4 1354.5151 2809.3645 1454.8495  412  413       0     100
+124   3     3     5 2993.3110 3160.5351  167.2241  935  560       0     100
+125   3     3     6 3177.2575 4749.1639 1571.9064  962  558       0     100
+126   3     3     7 4866.2207 5000.0000  133.7793 1177  523       0     100
+127   3     4     1    0.0000  317.7258  317.7258  962  541       0     100
+128   3     4     2  551.8395 1739.1304 1187.2910 1721  322       0     100
+129   3     4     3 2006.6890 2909.6990  903.0100  389  369       0     100
+130   3     4     4 3076.9231 3177.2575  100.3344  927  516       0     100
+131   3     4     5 3193.9799 4849.4983 1655.5184  954  523       0     100
+132   3     4     6 4866.2207 5000.0000  133.7793  942  556       0     100
+133   3     5     1    0.0000  434.7826  434.7826  959  541       0     100
+134   3     5     2  652.1739 1070.2341  418.0602  293   75       0     100
+135   3     5     3 1086.9565 2775.9197 1688.9632  288   71       0     100
+136   3     5     4 2993.3110 3260.8696  267.5585  946  556       0     100
+137   3     5     5 3277.5920 3812.7090  535.1171  954  563       0     100
+138   3     5     6 3979.9331 4096.9900  117.0569  692  901       0     100
+139   3     5     7 4113.7124 4397.9933  284.2809  677  915       0     100
+140   3     5     8 4565.2174 4665.5518  100.3344  933  574       0     100
+141   3     5     9 4682.2742 5000.0000  317.7258  946  555       0     100
+    disp_tol
+1         50
+2         50
+3         50
+4         50
+5         50
+6         50
+7         50
+8         50
+9         50
+10        50
+11        50
+12        50
+13        50
+14        50
+15        50
+16        50
+17        50
+18        50
+19        50
+20        50
+21        50
+22        50
+23        50
+24        50
+25        50
+26        50
+27        50
+28        50
+29        50
+30        50
+31        50
+32        50
+33        50
+34        50
+35        50
+36        50
+37        50
+38        50
+39        50
+40        50
+41        50
+42        50
+43        50
+44        50
+45        50
+46        50
+47        50
+48        50
+49        50
+50        50
+51        50
+52        50
+53        50
+54        50
+55        50
+56        50
+57        50
+58        50
+59        50
+60        50
+61        50
+62        50
+63        50
+64        50
+65        50
+66        50
+67        50
+68        50
+69        50
+70        50
+71        50
+72        50
+73        50
+74        50
+75        50
+76        50
+77        50
+78        50
+79        50
+80        50
+81        50
+82        50
+83        50
+84        50
+85        50
+86        50
+87        50
+88        50
+89        50
+90        50
+91        50
+92        50
+93        50
+94        50
+95        50
+96        50
+97        50
+98        50
+99        50
+100       50
+101       50
+102       50
+103       50
+104       50
+105       50
+106       50
+107       50
+108       50
+109       50
+110       50
+111       50
+112       50
+113       50
+114       50
+115       50
+116       50
+117       50
+118       50
+119       50
+120       50
+121       50
+122       50
+123       50
+124       50
+125       50
+126       50
+127       50
+128       50
+129       50
+130       50
+131       50
+132       50
+133       50
+134       50
+135       50
+136       50
+137       50
+138       50
+139       50
+140       50
+141       50</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>fixations_df <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(fixations) <span class="sc">%&gt;%</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_tibble</span>()</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(fixations_df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 11
+    pID trial fix_n start   end duration     x     y prop_NA min_dur disp_tol
+  &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;    &lt;dbl&gt;
+1     1     1     1    0   753.     753.   961   540       0     100       50
+2     1     1     2  903. 1003.     100.  1367   670       0     100       50
+3     1     1     3 1020. 1639.     619.  1401   680       0     100       50
+4     1     1     4 1806. 1940.     134.  1001   566       0     100       50
+5     1     1     5 1957. 2324.     368.   982   557       0     100       50
+6     1     1     6 2341. 2776.     435.   963   512       0     100       50</code></pre>
+</div>
+</div>
+</section>
+<section id="vizualizace" class="level2">
+<h2 class="anchored" data-anchor-id="vizualizace">3. Vizualizace</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_spatial</span>(et_data, fixations, <span class="at">AOIs =</span> aoi_sets)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="vignette_02_eyetools_files/figure-html/plot all-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_seq</span>(et_data, <span class="at">pID_values =</span> <span class="dv">1</span>, <span class="at">trial_values =</span> <span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="vignette_02_eyetools_files/figure-html/plot-sequential-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_spatial</span>(et_data, fixations, <span class="at">trial_values =</span><span class="dv">1</span>, <span class="at">pID_values =</span> <span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="vignette_02_eyetools_files/figure-html/plot-spatial-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_seq</span>(et_data, <span class="at">AOIs =</span> aoi_sets)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Multiple pIDs detected: randomly sampled - pID:2</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Multiple trials detected: randomly sampled - trial:5</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="vignette_02_eyetools_files/figure-html/plot-aoi-grow-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<section id="heatmapa" class="level3">
+<h3 class="anchored" data-anchor-id="heatmapa">Heatmapa</h3>
+<p>Vytvoříme heatmapu hustoty pohledů.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_heatmap</span>(et_data)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Removed 1 row containing non-finite outside the scale range
+(`stat_density2d()`).</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Removed 396 rows containing missing values or values outside the scale range
+(`geom_tile()`).</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="vignette_02_eyetools_files/figure-html/plot-heatmap-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_heatmap</span>(et_data, <span class="at">pID_values =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_heatmap</span>(et_data, <span class="at">pID_values =</span> <span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Removed 396 rows containing missing values or values outside the scale range
+(`geom_tile()`).
+Removed 396 rows containing missing values or values outside the scale range
+(`geom_tile()`).</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="vignette_02_eyetools_files/figure-html/plot-heatmap-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_heatmap</span>(et_data, <span class="at">trial_values =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_heatmap</span>(et_data, <span class="at">trial_values =</span> <span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Removed 396 rows containing missing values or values outside the scale range
+(`geom_tile()`).
+Removed 396 rows containing missing values or values outside the scale range
+(`geom_tile()`).</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="vignette_02_eyetools_files/figure-html/plot-heatmap-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="analýza-aoi-area-of-interest" class="level2">
+<h2 class="anchored" data-anchor-id="analýza-aoi-area-of-interest">4. Analýza AOI (Area of Interest)</h2>
+<p>Definujeme AOI a spočítáme metriky.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Výpočet času v AOI</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>aoi_results <span class="ot">&lt;-</span> <span class="fu">AOI_time</span>(et_data, <span class="at">AOIs =</span> aoi_sets, <span class="at">data_type =</span> <span class="st">"raw"</span>)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>aoi_results_fixations <span class="ot">&lt;-</span> <span class="fu">AOI_time</span>(fixations, <span class="at">AOIs =</span> aoi_sets, <span class="at">data_type =</span> <span class="st">"fix"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+</section>
+<section id="vizualizace-výsledků" class="level1">
+<h1>Vizualizace výsledků</h1>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>aoi_results <span class="sc">%&gt;%</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">factor</span>(trial), <span class="at">y =</span> time, <span class="at">fill =</span> <span class="fu">factor</span>(pID))) <span class="sc">+</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">position =</span> <span class="st">"dodge"</span>) <span class="sc">+</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> AOI) <span class="sc">+</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Čas strávený v AOI 'Target'"</span>,</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Trial"</span>,</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Čas (ms)"</span>,</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill =</span> <span class="st">"Účastník"</span></span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="vignette_02_eyetools_files/figure-html/plot-aoi-time-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="aoi-sequence-analysis" class="level1">
+<h1>AOI Sequence Analysis</h1>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>data_AOI_sequence <span class="ot">&lt;-</span> <span class="fu">AOI_seq</span>(fixations,</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>                             aoi_sets,         </span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>                             <span class="at">AOI_names =</span> aoi_names)</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(data_AOI_sequence)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  pID trial    AOI     start       end  duration entry_n
+1   1     1   &lt;NA&gt;    0.0000  752.5084  752.5084       1
+2   1     1 Screen  903.0100 1638.7960  735.7860       2
+3   1     1   &lt;NA&gt; 1806.0201 3595.3177 1789.2977       3
+4   1     1   &lt;NA&gt; 3762.5418 5000.0000 1237.4582       4
+5   1     2   &lt;NA&gt;    0.0000  384.6154  384.6154       1
+6   1     2   &lt;NA&gt;  551.8395 1705.6856 1153.8462       2</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_AOI_growth</span>(et_data,</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>                aoi_sets,</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">AOI_names =</span> aoi_names,</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">pID_values =</span> <span class="dv">1</span>,</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>                <span class="at">trial_values =</span> <span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="vignette_02_eyetools_files/figure-html/aoi plots-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_AOI_growth</span>(<span class="at">data =</span> et_data,</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">pID_values =</span> <span class="dv">1</span>, </span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">trial_values =</span> <span class="dv">1</span>, </span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">AOIs =</span> aoi_sets, </span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>                <span class="at">AOI_names =</span> aoi_names,</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>                <span class="at">type =</span> <span class="st">"prop"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="vignette_02_eyetools_files/figure-html/aoi plots-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="sakády" class="level1">
+<h1>Sakády</h1>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>sacades <span class="ot">&lt;-</span> <span class="fu">saccade_VTI</span>(et_data, <span class="at">threshold =</span> <span class="dv">100</span>, <span class="at">min_dur =</span> <span class="dv">20</span>)</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>sacades</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   pID trial sac_n     start       end  duration  origin_x  origin_y terminal_x
+1    1     1     1 3612.0401 3645.4849  33.44482  867.5329 508.05058   710.3566
+2    1     2     1  401.3378  434.7826  33.44482  846.0696 515.07488   682.0099
+3    1     2     2 1722.4080 1839.4649 117.05686  679.0902 529.14153  1598.1542
+4    1     2     3 2709.0301 2775.9197  66.88963 1669.3420 922.94582  1261.4912
+5    1     3     1  852.8428  919.7324  66.88963 1119.5530 564.21653  1496.3534
+6    1     3     2 1505.0167 1571.9064  66.88963 1595.2849 639.09193  1211.5717
+7    1     3     3 2324.4147 2391.3043  66.88963 1079.7839 451.51218  1397.2295
+8    1     3     4 3060.2007 3160.5351 100.33445 1375.1973 122.51053   660.1692
+9    1     3     5 3745.8194 3779.2642  33.44482  513.7991 433.77584   668.8347
+10   1     4     1  685.6187  719.0635  33.44482  844.7741 509.22444   678.8489
+11   1     4     2 3377.9264 3411.3712  33.44482  521.1816 451.12326   678.6635
+12   1     5     1  668.8963  702.3411  33.44482  848.2459 510.64013   687.3201
+13   1     5     2 1739.1304 1822.7425  83.61204  605.6912 409.62561  1155.5454
+14   1     5     3 2558.5284 2642.1405  83.61204 1217.9331 454.87425   665.0064
+15   1     5     4 3394.6488 3461.5385  66.88963  551.4032 461.11249   919.5437
+16   1     5     5 4882.9431 4916.3880  33.44482  851.1618 492.91888   685.8096
+17   2     1     1  936.4548  969.8997  33.44482  871.8095 519.38477   706.4002
+18   2     1     2 1538.4615 1571.9064  33.44482  522.7465 437.36384   681.7331
+19   2     1     3 2123.7458 2157.1906  33.44482  851.6305 509.21123   689.2772
+20   2     1     4 3060.2007 3093.6455  33.44482  512.1655 410.43215   672.7488
+21   2     1     5 3829.4314 3862.8763  33.44482  843.5780 512.57308   678.4788
+22   2     2     1 1036.7893 1103.6789  66.88963 1115.8763 617.72980  1480.9636
+23   2     2     2 1889.6321 1956.5217  66.88963 1651.0963 737.00847  1454.7227
+24   2     2     3 2892.9766 2926.4214  33.44482 1203.6911  56.84098  1038.3875
+25   2     2     4 4214.0468 4247.4916  33.44482  517.2933 444.00685   683.9546
+26   2     2     5 4832.7759 4899.6656  66.88963 1133.4023 459.82588  1495.1073
+27   2     3     1  434.7826  468.2274  33.44482  846.5881 514.62471   683.2750
+28   2     3     2 1588.6288 1622.0736  33.44482  504.8968 441.95127   671.1327
+29   2     3     3 2190.6355 2224.0803  33.44482  847.5827 502.51373   676.1065
+30   2     3     4 2943.1438 2976.5886  33.44482  488.6173 418.33760   657.6118
+31   2     4     1  702.3411  735.7860  33.44482  847.8198 515.59598   686.2802
+32   2     4     2 1321.0702 1387.9599  66.88963  536.3260 516.13347   860.4019
+33   2     4     3 2073.5786 2140.4682  66.88963  943.3408 799.88026   608.2433
+34   2     4     4 3143.8127 3227.4247  83.61204  596.6461 339.81793  1190.6605
+35   2     5     1  668.8963  702.3411  33.44482  853.7983 508.28517   700.8679
+36   2     5     2 1371.2375 1404.6823  33.44482  535.6104 411.94504   689.1414
+37   3     1     1 1739.1304 1789.2977  50.16722 1082.4279 618.98739  1353.1370
+38   3     1     2 2709.0301 2759.1973  50.16722 1502.0369 725.67467  1238.2771
+39   3     2     1  869.5652  903.0100  33.44482  843.4792 508.81075   675.6893
+40   3     2     2 2424.7492 2458.1940  33.44482  518.0218 422.88029   676.5012
+41   3     2     3 4280.9365 4314.3813  33.44482  827.5179 496.44853   664.4320
+42   3     3     1 1086.9565 1120.4013  33.44482  871.6402 493.07728   706.3247
+43   3     3     2 2826.0870 2859.5318  33.44482  519.9924 443.52796   674.8819
+44   3     4     1  334.4482  384.6154  50.16722 1112.7473 496.45277  1410.9099
+45   3     4     2 1755.8528 1856.1873 100.33445 1456.3112 331.70578   667.0262
+46   3     4     3 2926.4214 2959.8662  33.44482  501.7081 400.69825   667.4484
+47   3     5     1  451.5050  518.3946  66.88963  825.5687 446.09365   508.0958
+48   3     5     2 2792.6421 2859.5318  66.88963  421.1103 168.79583   735.8330
+   terminal_y mean_velocity peak_velocity
+1    458.9623      139.8057      169.6767
+2    479.1827      147.4150      187.5362
+3    915.6975      249.3942      483.5924
+4    697.8127      200.8636      297.8629
+5    621.4063      164.4252      244.1337
+6    587.1587      166.6120      245.8260
+7    216.2569      169.5891      248.7285
+8    327.5341      217.1875      392.4279
+9    481.8738      137.8595      167.3836
+10   464.9076      144.9017      174.2320
+11   490.0410      139.3569      172.0361
+12   468.3619      138.4501      162.9967
+13   453.7969      190.0956      304.0589
+14   399.8752      192.6089      313.0308
+15   669.0350      183.3143      275.3890
+16   466.2621      145.7812      183.3215
+17   480.4503      149.0055      189.2906
+18   474.9914      138.8020      168.6138
+19   462.1613      145.6550      180.5984
+20   456.3901      140.1001      166.9709
+21   475.8242      145.2504      179.2234
+22   795.2537      176.3773      266.2308
+23   308.6013      202.2889      296.7930
+24   122.2952      147.5995      173.1535
+25   482.3800      145.5937      177.3995
+26   245.4561      181.9171      271.9522
+27   478.0843      145.3578      182.2577
+28   474.6489      141.4216      167.3102
+29   458.9333      154.7846      196.0176
+30   471.4457      155.8669      198.9379
+31   480.4542      142.2610      176.0503
+32   747.9329      172.7621      259.5513
+33   542.7790      182.8916      273.9353
+34   273.6815      205.8140      328.5635
+35   462.6158      135.0273      163.0136
+36   455.8926      137.8407      171.3124
+37   696.5341      160.2876      214.0783
+38   623.7413      162.3480      220.5396
+39   463.8982      145.4334      172.8625
+40   455.8928      139.8159      173.9261
+41   453.5188      143.0537      173.3886
+42   464.3808      149.5450      194.1570
+43   486.9630      144.0936      188.3010
+44   411.4486      179.3953      247.3838
+45   359.5729      229.6128      409.8086
+46   445.6619      149.8369      189.0536
+47   224.3244      166.5594      245.4890
+48   401.0063      167.5928      244.8105</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_spatial</span>(<span class="at">sac_data =</span> sacades, <span class="at">pID_values =</span> <span class="dv">1</span>, <span class="at">trial_values =</span> <span class="dv">4</span>, <span class="at">fix_data =</span> fixations, <span class="at">raw_data =</span> et_data)  </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+ℹ Please use `linewidth` instead.
+ℹ The deprecated feature was likely used in the eyetools package.
+  Please report the issue at &lt;https://github.com/tombeesley/eyetools/issues&gt;.</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="vignette_02_eyetools_files/figure-html/plot_sacades-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
