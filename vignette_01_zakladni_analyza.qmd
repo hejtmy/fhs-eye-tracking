@@ -1,122 +1,199 @@
 ---
-title: "1. Základní analýza eyetracking dat v R (Tidyverse)"
+title: "1. Přehledová analýza a vizualizace"
 author: "Antigravity"
 date: "`r Sys.Date()`"
-output: html_document
+output: 
+  html_document:
+    toc: true
+    theme: united
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(dplyr)
 library(ggplot2)
 library(tidyr)
-source("eyetracker.R") # Načtení základních funkcí
+library(knitr)
 ```
 
 # Úvod
 
-Tato vigneta demonstruje základní postupy při analýze dat z oční kamery s využitím moderních balíků `dplyr` a `ggplot2`, v kombinaci s funkcemi z `eyetracker.R`.
+Tato vigneta slouží k základnímu přehledu dat a demonstraci vizualizačních technik. Zaměříme se na "hrubá" data (raw data), abychom pochopili jejich charakter a ukázali si, proč je často nutné přistoupit k pokročilejšímu zpracování (např. detekci fixací).
+
+Ukážeme si:
+1.  Prostorové vizualizace (kde se člověk díval).
+2.  Časové řady (jak se pohled a zornice měnily v čase).
+3.  Průměrování reakcí (podobně jako u ERP v EEG).
 
 ## 1. Načtení dat
 
-Načteme data a rovnou je upravíme do vhodného formátu.
+Načteme vzorová data, která obsahují informace o pozici očí (`x`, `y`), velikosti zornice (`pupil`) a čase (`timestamp`).
 
 ```{r load-data}
+# Načtení raw dat a informací o trialech
 raw_data <- read.csv("data/raw_data.csv")
 trials <- read.csv("data/trials.csv")
 
+# Spojení dat
 df <- raw_data %>%
   left_join(trials, by = "trial_id") %>%
   as_tibble()
 
+# Náhled na data
 glimpse(df)
 ```
 
-## 2. Předzpracování
+## 2. Prostorové vizualizace
 
-Vypočítáme rychlost a vyhladíme ji. Využijeme `group_by` pro výpočet v rámci každého trialu a subjektu.
+Nejprve se podíváme na to, kam se účastník díval v prostoru obrazovky.
 
-```{r preprocessing}
-df_processed <- df %>%
+### Bodový graf (Raw Data Points)
+
+Vykreslení všech naměřených bodů nám dá hrubou představu o rozložení pohledu.
+
+```{r plot-points, fig.width=10, fig.height=6}
+# Vybereme jeden trial pro přehlednost
+df_trial <- df %>% filter(subject_id == 1, trial_id == 1)
+
+ggplot(df_trial, aes(x = x, y = y)) +
+  geom_point(alpha = 0.5, size = 1, color = "darkblue") +
+  scale_y_reverse() + # Y souřadnice u obrazovek často začínají nahoře
+  theme_minimal() +
+  labs(
+    title = "Rozložení pohledu (Raw Data) - Trial 1",
+    x = "X (px)",
+    y = "Y (px)"
+  )
+```
+
+**Poznámka:** Vidíme, že data tvoří shluky. Tyto shluky pravděpodobně odpovídají fixacím (zastavení oka), zatímco "řídké" přechody mezi nimi jsou sakády (rychlé pohyby). Algoritmy pro detekci fixací dělají právě to, že tyto shluky matematicky identifikují.
+
+### Heatmapa
+
+Pokud máme hodně dat, bodový graf se stane nepřehledným. Heatmapa (teplotní mapa) nám lépe ukáže oblasti s nejvyšší hustotou pohledu.
+
+```{r plot-heatmap, fig.width=10, fig.height=6}
+ggplot(df_trial, aes(x = x, y = y)) +
+  stat_density_2d(aes(fill = ..level..), geom = "polygon", color = "white") +
+  scale_fill_viridis_c() +
+  scale_y_reverse() +
+  theme_minimal() +
+  labs(
+    title = "Heatmapa pohledu - Trial 1",
+    x = "X (px)",
+    y = "Y (px)",
+    fill = "Hustota"
+  )
+```
+
+## 3. Časové řady a Eventy
+
+Často nás zajímá nejen *kam*, ale i *kdy* se účastník díval.
+
+### Horizontální a vertikální složky
+
+Můžeme vykreslit pohyb v ose X a Y v čase odděleně. To je užitečné pro kontrolu kvality dat nebo sledování systematických pohybů (např. čtení řádků).
+
+Do grafu přidáme i **vizualizaci eventů**. V tomto případě použijeme začátek trialu jako referenční bod (čas 0).
+
+```{r plot-timeseries, fig.width=12, fig.height=6}
+# Upravíme čas tak, aby začínal na 0 pro daný trial
+df_trial_time <- df_trial %>%
+  mutate(time_rel = timestamp - min(timestamp))
+
+# Převedeme do dlouhého formátu pro snadné vykreslení obou os
+df_long <- df_trial_time %>%
+  select(time_rel, x, y) %>%
+  pivot_longer(cols = c(x, y), names_to = "axis", values_to = "position")
+
+ggplot(df_long, aes(x = time_rel, y = position, color = axis)) +
+  geom_line() +
+  # Přidání eventu (např. čas 500ms a 1500ms jako ukázka)
+  geom_vline(xintercept = c(500, 1500), linetype = "dashed", color = "black") +
+  annotate("text", x = 500, y = max(df_long$position), label = "Event 1", vjust = -1, angle = 90) +
+  theme_minimal() +
+  labs(
+    title = "Pohyb očí v čase (X a Y)",
+    subtitle = "Svislé čáry značí eventy",
+    x = "Čas od začátku trialu (ms)",
+    y = "Pozice (px)"
+  )
+```
+
+### Pupilometrie
+
+Změna velikosti zornice může indikovat kognitivní zátěž nebo emoční reakci.
+
+```{r plot-pupil, fig.width=12, fig.height=5}
+ggplot(df_trial_time, aes(x = time_rel, y = pupil)) +
+  geom_line(color = "purple", size = 1) +
+  # Přidání eventu do pupilometrie
+  geom_vline(xintercept = c(500, 1500), linetype = "dashed", color = "black") +
+  annotate("text", x = 500, y = max(df_trial_time$pupil, na.rm = TRUE), label = "Event 1", vjust = -1, angle = 90) +
+  theme_minimal() +
+  labs(
+    title = "Vývoj velikosti zornice v čase",
+    subtitle = "Svislé čáry značí eventy",
+    x = "Čas (ms)",
+    y = "Velikost zornice"
+  )
+```
+
+## 4. Průměry reakcí (ERP-style)
+
+Podobně jako u EEG (Event-Related Potentials), i v eyetrackingu můžeme průměrovat signál přes více trialů, abychom odhalili obecné trendy a potlačili šum.
+
+Zde vykreslíme průměrnou změnu velikosti zornice napříč všemi trialy pro jednoho účastníka.
+
+```{r plot-erp, fig.width=10, fig.height=6}
+# Příprava dat: zarovnání času pro všechny trialy
+df_erp <- df %>%
+  filter(subject_id == 1) %>%
+  group_by(trial_id) %>%
+  mutate(time_rel = timestamp - min(timestamp)) %>%
+  ungroup() %>%
+  # Zaokrouhlení času na "biny" pro průměrování (např. po 50 ms)
+  mutate(time_bin = round(time_rel / 50) * 50) %>%
+  group_by(time_bin) %>%
+  summarise(
+    mean_pupil = mean(pupil, na.rm = TRUE),
+    se_pupil = sd(pupil, na.rm = TRUE) / sqrt(n())
+  )
+
+ggplot(df_erp, aes(x = time_bin, y = mean_pupil)) +
+  geom_ribbon(aes(ymin = mean_pupil - se_pupil, ymax = mean_pupil + se_pupil), 
+              fill = "purple", alpha = 0.2) +
+  geom_line(color = "purple", size = 1.2) +
+  theme_minimal() +
+  labs(
+    title = "Průměrná reakce zornice (Grand Average)",
+    subtitle = "Průměr přes všechny trialy ± standardní chyba (SE)",
+    x = "Čas od začátku trialu (ms)",
+    y = "Průměrná velikost zornice"
+  )
+```
+
+## 5. Tabulkový přehled
+
+Pro rychlou kontrolu dat je užitečné vytvořit souhrnné tabulky.
+
+```{r summary-table}
+# Souhrn za trialy
+trial_summary <- df %>%
   group_by(subject_id, trial_id) %>%
-  mutate(
-    velocity = c(0, calculate_velocity(x, y, timestamp)),
-    smooth_vel = smooth_velocity(velocity, window_size = 5)
+  summarise(
+    n_samples = n(),
+    duration_ms = max(timestamp) - min(timestamp),
+    avg_pupil = mean(pupil, na.rm = TRUE),
+    sd_pupil = sd(pupil, na.rm = TRUE),
+    min_pupil = min(pupil, na.rm = TRUE),
+    max_pupil = max(pupil, na.rm = TRUE),
+    missing_pupil_pct = sum(is.na(pupil)) / n() * 100
   ) %>%
   ungroup()
 
-df_processed %>%
-  filter(subject_id == 1, trial_id == 1) %>%
-  ggplot(aes(x = timestamp, y = smooth_vel)) +
-  geom_line(color = "blue") +
-  theme_minimal() +
-  labs(
-    title = "Rychlost pohybu očí (Trial 1)",
-    x = "Čas (ms)",
-    y = "Rychlost (px/ms)"
-  )
+# Zobrazení prvních pár řádků
+kable(head(trial_summary), digits = 2, caption = "Souhrnné statistiky pro první trialy")
 ```
 
-## 3. Detekce fixací
-
-Aplikujeme detekci fixací na každý trial zvlášť.
-
-```{r fixation-detection}
-detect_fixations_wrapper <- function(data) {
-  fix <- detect_fixations_ivt(
-    x = data$x,
-    y = data$y,
-    timestamps = data$timestamp,
-    velocity_threshold = 0.5,
-    min_duration = 100
-  )
-  if (!is.null(fix)) {
-    # Přidáme identifikátory skupiny
-    fix$subject_id <- unique(data$subject_id)
-    fix$trial_id <- unique(data$trial_id)
-    return(fix)
-  }
-  return(NULL)
-}
-
-# Aplikace na všechna data
-fixations <- df_processed %>%
-  group_split(subject_id, trial_id) %>%
-  purrr::map_dfr(detect_fixations_wrapper) %>%
-  as_tibble()
-
-print(head(fixations))
-```
-
-## 4. Vizualizace (Scanpath)
-
-Vytvoříme scanpath plot pomocí `ggplot2`.
-
-```{r visualization}
-# Příprava dat pro vizualizaci jednoho trialu
-trial_fixations <- fixations %>%
-  filter(subject_id == 1, trial_id == 1)
-
-trial_raw <- df_processed %>%
-  filter(subject_id == 1, trial_id == 1)
-
-plot_scanpath(trial_raw, trial_fixations, 
-               main = "Scanpath - Subjekt 1, Trial 1")
-```
-
-## 5. Souhrnné statistiky
-
-Vypočítáme průměrné trvání fixací pro každého účastníka pomocí `dplyr`.
-
-```{r summary}
-fix_summary <- fixations %>%
-  group_by(subject_id) %>%
-  summarise(
-    n_fixations = n(),
-    mean_duration = mean(duration),
-    total_duration = sum(duration),
-    mean_dispersion = mean(dispersion)
-  )
-
-print(fix_summary)
-```
+Tento přehled nám rychle ukáže, zda nemáme trialy s příliš krátkým trváním nebo vysokým podílem chybějících dat (např. kvůli mrkání).

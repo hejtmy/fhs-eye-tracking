@@ -81,7 +81,7 @@ data_with_gaps %>%
   labs(title = "Data s chybějícími hodnotami")
 ```
 
-```{r interpolate}
+```{r }
 # Interpolace mezer kratších než 50 ms (příklad)
 # Poznámka: reportuje počet interpolovaných vzorků
 data_interp <- interpolate(data_with_gaps, maxgap = 500)
@@ -100,9 +100,13 @@ Funkce `smoother()` aplikuje klouzavý průměr (nebo jinou metodu) pro redukci 
 
 ```{r smooth}
 data_smooth <- smoother(et_data, span = 0.05, plot = TRUE)
+```
 
+```{r}
 data_smooth <- smoother(et_data, span = 0.1, plot = TRUE)
+```
 
+```{r}
 data_smooth <- smoother(et_data, span = 0.5, plot = TRUE)
 ```
 
@@ -119,9 +123,6 @@ dist_to_visual_angle(1920,
 ```
 
 
-
-
-
 ## 3. Porovnání algoritmů detekce fixací
 
 https://tombeesley.github.io/eyetools/reference/fixation_dispersion.html
@@ -134,7 +135,6 @@ fixation_dispersion(
   progress = TRUE
 )
 ```
-
 
 Druhý algoritmus je založen na rychlostním prahu (I-VT).
 

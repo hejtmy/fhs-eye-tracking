@@ -139,7 +139,7 @@ plot_AOI_growth(data = et_data,
 ```
 
 
-# Sakady
+# Sakády
 
 ```{r saccade-detection}
 sacades <- saccade_VTI(et_data, threshold = 100, min_dur = 20)
