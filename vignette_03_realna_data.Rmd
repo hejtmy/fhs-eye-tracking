@@ -1,0 +1,154 @@
+---
+title: "3. Analýza reálných dat (Dataset HCL)"
+author: "Antigravity"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(eyetools)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+```
+
+# Úvod
+
+V této vignetě si ukážeme kompletní proces analýzy očních dat pomocí balíku `eyetools`. Budeme pracovat s reálným datasetem `HCL` (Beesley et al., 2015), který je součástí balíku.
+
+Proces zahrnuje:
+1.  Načtení a přípravu dat
+2.  Předzpracování (interpolace, vyhlazení)
+3.  Detekci fixací
+4.  Analýzu oblastí zájmu (AOI)
+5.  Vizualizaci
+
+## 1. Načtení a příprava dat
+
+Nejprve načteme data a podíváme se na jejich strukturu. Dataset obsahuje binokulární data.
+
+```{r load-data}
+data("HCL", package = "eyetools")
+hcl_data <- as_tibble(HCL)
+glimpse(hcl_data)
+```
+
+Pro další analýzu sloučíme data z obou očí do jednoho "kyklopského" oka (průměr souřadnic).
+
+```{r combine-eyes}
+# Sloučení očí
+df <- combine_eyes(hcl_data)
+glimpse(df)
+```
+
+## 2. Předzpracování (Preprocessing)
+
+Reálná data často obsahují chybějící hodnoty (např. mrkání) a šum.
+
+### Interpolace chybějících dat
+
+Použijeme funkci `interpolate()` pro doplnění krátkých úseků chybějících dat.
+
+```{r interpolate}
+# Interpolace chybějících hodnot (maxgap = 150 ms odpovídá mrknutí)
+df_interp <- interpolate(df, maxgap = 150, method = "approx")
+
+# Můžeme si vyžádat report o interpolaci
+interp_report <- interpolate(df, maxgap = 150, method = "approx", report = TRUE)
+print(interp_report[[2]])
+```
+
+### Vyhlazení dat (Smoothing)
+
+Pro odstranění šumu a jemných sakád použijeme funkci `smoother()`.
+
+```{r smooth}
+# Vyhlazení dat
+# span = 0.02 je doporučená hodnota pro tento typ dat (viz dokumentace)
+df_smooth <- smoother(df_interp, span = 0.02, plot = FALSE)
+
+# Ukázka vyhlazení (vykreslíme pro kontrolu)
+# smoother(df_interp, span = 0.02, plot = TRUE)
+```
+
+## 3. Detekce fixací
+
+Nyní detekujeme fixace pomocí disperzního algoritmu (`fixation_dispersion`).
+
+```{r fixations}
+# Detekce fixací
+# disp_tol: tolerance rozptylu v pixelech
+# min_dur: minimální trvání fixace v ms
+fixations <- fixation_dispersion(df_smooth, disp_tol = 50, min_dur = 100)
+
+# Výsledek je list data framů, spojíme je pro snazší práci
+fixations_df <- bind_rows(fixations) %>%
+  as_tibble()
+
+print(head(fixations_df))
+```
+
+## 4. Analýza AOI (Area of Interest)
+
+Definujeme oblasti zájmu (AOI) pro tento experiment. Experiment obsahoval podněty vlevo a vpravo a tlačítka odpovědí uprostřed.
+
+```{r define-aoi}
+# Definice AOI
+# Vytvoříme matici definující AOI: x, y, width/radius, height
+AOI_areas <- data.frame(matrix(nrow = 3, ncol = 4))
+colnames(AOI_areas) <- c("x", "y", "width_radius", "height")
+
+AOI_areas[1,] <- c(460, 840, 400, 300)   # Levý podnět
+AOI_areas[2,] <- c(1460, 840, 400, 300)  # Pravý podnět
+AOI_areas[3,] <- c(960, 270, 300, 500)   # Odpovědi
+
+print(AOI_areas)
+```
+
+Spočítáme čas strávený v jednotlivých AOI pro každý trial.
+
+```{r aoi-analysis}
+# Výpočet času v AOI z fixací
+aoi_results <- AOI_time(data = fixations, data_type = "fix", AOIs = AOI_areas)
+
+print(head(aoi_results))
+
+# Vizualizace výsledků AOI
+aoi_results %>%
+  as_tibble() %>%
+  ggplot(aes(x = factor(trial), y = time, fill = AOI)) +
+  geom_col(position = "dodge") +
+  facet_wrap(~ pID) +
+  theme_minimal() +
+  labs(title = "Čas strávený v AOI", x = "Trial", y = "Čas (ms)")
+```
+
+## 5. Vizualizace
+
+Balík `eyetools` nabízí funkce pro vizualizaci trajektorií a fixací.
+
+### Sekvenční plot (`plot_seq`)
+
+Zobrazí časový průběh souřadnic X a Y pro jeden trial.
+
+```{r plot-seq}
+# Vykreslení jednoho trialu (náhodný výběr nebo specifikovaný)
+# Zobrazíme i definované AOI
+plot_seq(df_smooth, pID_values = 119, trial_values = 1, AOIs = AOI_areas)
+```
+
+### Prostorový plot (`plot_spatial`)
+
+Zobrazí 2D trajektorii pohledu a detekované fixace.
+
+```{r plot-spatial}
+# Vykreslení trajektorie a fixací pro konkrétní trial
+plot_spatial(raw_data = df_smooth, 
+             fix_data = fixations, 
+             pID_values = 119, 
+             trial_values = 1, 
+             AOIs = AOI_areas)
+```
+
+Tímto jsme prošli kompletní analýzu od načtení dat až po vizualizaci výsledků pomocí balíku `eyetools`.

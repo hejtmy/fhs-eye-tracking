@@ -42,10 +42,7 @@ Vypočítáme rychlost a vyhladíme ji. Využijeme `group_by` pro výpočet v r�
 df_processed <- df %>%
   group_by(subject_id, trial_id) %>%
   mutate(
-    # Výpočet rychlosti (použijeme funkci z claude.R, ale aplikujeme ji uvnitř mutate)
     velocity = c(0, calculate_velocity(x, y, timestamp)),
-    
-    # Vyhlazení rychlosti
     smooth_vel = smooth_velocity(velocity, window_size = 5)
   ) %>%
   ungroup()
@@ -109,17 +106,22 @@ trial_raw <- df_processed %>%
 
 ggplot() +
   # Surová data (volitelné, pro kontext)
-  geom_path(data = trial_raw, aes(x = x, y = y), color = "gray80", alpha = 0.5) +
-  
+  geom_path(data = trial_raw, aes(x = x, y = y), 
+            color = "gray80", alpha = 0.5) +
+
   # Sakády (čáry mezi fixacemi)
-  geom_path(data = trial_fixations, aes(x = x_centroid, y = y_centroid), color = "gray50") +
-  
+  geom_path(data = trial_fixations, aes(x = x_centroid, y = y_centroid),
+            color = "gray50") +
   # Fixace (kruhy, velikost dle trvání)
-  geom_point(data = trial_fixations, aes(x = x_centroid, y = y_centroid, size = duration, color = factor(fixation_id)), alpha = 0.7) +
-  
+  geom_point(data = trial_fixations,
+             aes(x = x_centroid, y = y_centroid, size = duration, color = factor(fixation_id)), 
+             alpha = 0.7) +
+
   # Čísla fixací
-  geom_text(data = trial_fixations, aes(x = x_centroid, y = y_centroid, label = fixation_id), size = 3, color = "white") +
-  
+  geom_text(data = trial_fixations,
+            aes(x = x_centroid, y = y_centroid, label = fixation_id),
+            size = 3, color = "white") +
+
   # Nastavení os a vzhledu
   scale_y_reverse(limits = c(1080, 0)) +
   scale_x_continuous(limits = c(0, 1920)) +

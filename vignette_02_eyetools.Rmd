@@ -25,14 +25,14 @@ Balík `eyetools` poskytuje sadu funkcí pro zpracování a vizualizaci eyetrack
 # Načtení našich vygenerovaných dat
 raw_data <- read.csv("data/raw_data.csv")
 
-# Přejmenování sloupců pro eyetools pomocí dplyr
 et_data <- raw_data %>%
   rename(
     pID = subject_id,
-    trial_values = trial_id,
-    time = timestamp
+    trial = trial_id,
+    experiment_time = time,
+    time = timestamp,
   ) %>%
-  select(pID, trial_values, time, x, y)
+  select(pID, trial, time, x, y)
 
 glimpse(et_data)
 ```
@@ -48,6 +48,7 @@ fixations <- fixation_dispersion(et_data, disp_tol = 50, min_dur = 100)
 # Výsledek je list, převedeme ho na data frame pro snadnější práci v ggplot2
 # Poznámka: eyetools vrací fixace v trochu jiném formátu, často jako list df pro každého účastníka
 # Zde předpokládáme, že fixation_dispersion vrací data frame nebo list, který lze snadno spojit
+fixations
 fixations_df <- bind_rows(fixations) %>%
   as_tibble()
 
@@ -57,9 +58,11 @@ head(fixations_df)
 ## 3. Vizualizace pomocí ggplot2
 
 Místo vestavěných funkcí `plot_spatial` použijeme `ggplot2`.
+```{r plot-spatial}
+plot_spatial(et_data, fixations)
+````
 
 ### Prostorový graf (Spatial Plot)
-
 Zobrazí fixace a sakády pro vybraného účastníka a trial.
 
 ```{r plot-spatial-ggplot}

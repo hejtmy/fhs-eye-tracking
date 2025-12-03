@@ -30,8 +30,21 @@ df <- raw_data %>%
   left_join(trials, by = "trial_id") %>%
   mutate(
     time_sec = timestamp / 1000
-  )
-
+  ) %>%
+  group_by(trial_id) %>%
+  mutate(
+    # Výpočet rychlosti (velocity) pro detekci sakád
+    # Vzdálenost mezi vzorky
+    dist_px = sqrt((x - lag(x))^2 + (y - lag(y))^2),
+    # Časový rozdíl
+    time_diff = time_sec - lag(time_sec),
+    # Rychlost v px/s
+    velocity = dist_px / time_diff,
+    # Jednoduchá detekce sakád (prahová hodnota např. 
+    # 1000 px/s - závisí na vzorkovací frekvenci a nastavení)
+    is_saccade = velocity > 1000
+  ) %>%
+  ungroup()
 head(df)
 ```
 
@@ -66,7 +79,37 @@ ggplot(df_subset, aes(x = x, y = y)) +
   facet_wrap(~ condition + trial_id)
 ```
 
-## 3. Heatmapa (Teplotní mapa)
+## 3. Analýza sakád
+
+Můžeme analyzovat rychlost pohybu očí a identifikovat sakády.
+
+```{r saccades}
+# Vizualizace rychlostního profilu pro jeden trial
+df_trial1 <- df %>% filter(trial_id == 1)
+
+ggplot(df_trial1, aes(x = time_sec, y = velocity)) +
+  geom_line() +
+  geom_hline(yintercept = 1000, color = "red", linetype = "dashed") +
+  theme_minimal() +
+  labs(
+    title = "Rychlostní profil (Velocity Profile)",
+    y = "Rychlost (px/s)",
+    x = "Čas (s)"
+  )
+
+# Statistiky sakád
+saccade_stats <- df %>%
+  group_by(trial_id, condition) %>%
+  summarise(
+    saccade_count = sum(is_saccade, na.rm = TRUE),
+    mean_velocity = mean(velocity, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+head(saccade_stats)
+```
+
+## 4. Heatmapa (Teplotní mapa)
 
 Agregovaná heatmapa pro všechny účastníky v experimentální podmínce.
 
@@ -92,7 +135,92 @@ ggplot(df_exp, aes(x = x, y = y)) +
 
 *Poznámka: Pro `geom_circle` je třeba balík `ggforce`. Pokud není k dispozici, lze použít `geom_path` s vypočítanými body kruhu.*
 
-## 4. Analýza AOI v čase
+## 5. Pokročilá analýza AOI
+
+Kromě vzdálenosti od cíle můžeme analyzovat, kdy se pohled poprvé dostal do AOI (Time To First Fixation - TTF) a jak přecházel mezi AOI (Transition Probability).
+
+### Definice AOI hitů
+
+Nejprve určíme, ve které AOI se každý vzorek nachází.
+
+```{r aoi-hits}
+# Funkce pro zjištění, zda je bod v kruhu
+in_circle <- function(x, y, cx, cy, r) {
+  (x - cx)^2 + (y - cy)^2 <= r^2
+}
+
+# Přidání AOI hitů do dataframe
+df_aoi <- df %>%
+  mutate(
+    in_target = in_circle(x, y, 960, 540, 50), # Target r=50
+    in_distractor = in_circle(x, y, 400, 400, 50), # Distractor r=50
+    current_aoi = case_when(
+      in_target ~ "Target",
+      in_distractor ~ "Distractor",
+      TRUE ~ "Other"
+    )
+  )
+```
+
+### Time To First Fixation (TTF)
+
+```{r ttf}
+ttf_analysis <- df_aoi %>%
+  group_by(trial_id, condition) %>%
+  summarise(
+    # Najdeme první čas, kdy byl hit v Targetu
+    ttf_target = min(time_sec[in_target], na.rm = TRUE),
+    # Pokud nebyl hit, bude Inf -> nahradíme NA
+    ttf_target = ifelse(is.infinite(ttf_target), NA, ttf_target),
+    .groups = "drop"
+  )
+
+ggplot(ttf_analysis, aes(x = condition, y = ttf_target, fill = condition)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Time To First Fixation (Target)", y = "Čas (s)")
+```
+
+### Transition Probability
+
+Analyzujeme pravděpodobnost přechodu z jedné AOI do druhé.
+
+```{r transitions}
+# Funkce pro výpočet přechodů
+calc_transitions <- function(aoi_sequence) {
+  # Odstraníme po sobě jdoucí duplikáty (run-length encoding)
+  rle_res <- rle(aoi_sequence)
+  sequence <- rle_res$values
+  
+  # Vytvoříme páry (from -> to)
+  transitions <- data.frame(
+    from = head(sequence, -1),
+    to = tail(sequence, -1)
+  )
+  
+  return(transitions)
+}
+
+# Aplikace na data
+transitions_df <- df_aoi %>%
+  group_by(trial_id, condition) %>%
+  reframe(calc_transitions(current_aoi)) %>%
+  count(condition, from, to) %>%
+  group_by(condition, from) %>%
+  mutate(probability = n / sum(n)) %>%
+  ungroup()
+
+# Vizualizace přechodů (Heatmapa matice přechodů)
+ggplot(transitions_df, aes(x = to, y = from, fill = probability)) +
+  geom_tile() +
+  geom_text(aes(label = round(probability, 2)), color = "white") +
+  facet_wrap(~ condition) +
+  scale_fill_viridis_c() +
+  theme_minimal() +
+  labs(title = "Transition Probability Matrix")
+```
+
+## 6. Analýza vzdálenosti v čase
 
 Podíváme se, jak se mění vzdálenost od cíle v čase.
 
@@ -122,7 +250,7 @@ ggplot(df_dist, aes(x = time_norm, y = dist_to_center, color = condition, group 
   )
 ```
 
-## 5. Pupilometrie
+## 7. Pupilometrie
 
 Analýza změny velikosti zornice.
 
@@ -147,7 +275,29 @@ ggplot(df_pupil, aes(x = timestamp, y = pupil_change, color = condition)) +
   )
 ```
 
-## 6. Statistická analýza
+### Pokročilé metriky pupilometrie
+
+Můžeme spočítat maximální dilataci (Peak Dilation) a latenci k vrcholu (Latency to Peak).
+
+```{r pupil-advanced}
+pupil_metrics <- df_pupil %>%
+  group_by(trial_id, condition) %>%
+  summarise(
+    peak_dilation = max(pupil_change, na.rm = TRUE),
+    latency_to_peak = time_sec[which.max(pupil_change)],
+    mean_dilation = mean(pupil_change, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Vizualizace Peak Dilation
+ggplot(pupil_metrics, aes(x = condition, y = peak_dilation, fill = condition)) +
+  geom_violin(alpha = 0.5) +
+  geom_boxplot(width = 0.2) +
+  theme_minimal() +
+  labs(title = "Peak Pupil Dilation", y = "Max % změna")
+```
+
+## 8. Statistická analýza
 
 Vizualizace nám dává dobrý přehled, ale pro ověření hypotéz potřebujeme statistické testy. Zde si ukážeme základní přístupy: t-test, lineární regresi a ANOVA.
 

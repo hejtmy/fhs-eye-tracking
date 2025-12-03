@@ -21,21 +21,17 @@ load_eyetracking_data <- function(filepath,
                                    time_col = "timestamp",
                                    pupil_col = NULL) {
   data <- read.csv(filepath, stringsAsFactors = FALSE)
-  
   # Standardize column names
   result <- data.frame(
     x = data[[x_col]],
     y = data[[y_col]],
     timestamp = data[[time_col]]
   )
-  
   if (!is.null(pupil_col) && pupil_col %in% names(data)) {
     result$pupil <- data[[pupil_col]]
   }
-  
   # Add sample index
   result$sample_idx <- seq_len(nrow(result))
-  
   return(result)
 }
 
