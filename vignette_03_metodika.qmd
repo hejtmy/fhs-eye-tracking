@@ -1,6 +1,6 @@
 ---
-title: "5. Metodika a porovnání algoritmů (eyetools)"
-author: "Antigravity"
+title: "3. Metodika a porovnání algoritmů (eyetools)"
+author: "Lukáš Hejtmánek"
 date: "`r Sys.Date()`"
 output: html_document
 ---
@@ -149,7 +149,6 @@ fixation_VTI(
   smooth = FALSE,
   progress = TRUE
 )
-
 ```
 
 Různé algoritmy mohou identifikovat fixace odlišně. `eyetools` nabízí funkci `compare_algorithms()`, která spustí jak disperzní (I-DT), tak rychlostní (I-VT) algoritmus na stejných datech.

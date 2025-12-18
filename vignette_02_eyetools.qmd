@@ -1,6 +1,6 @@
 ---
-title: "2. Analýza pomocí balíku eyetools (Tidyverse)"
-author: "Antigravity"
+title: "2. Analýza pomocí balíku eyetools + (Tidyverse)"
+author: "Lukáš Hejtmánek"
 date: "`r Sys.Date()`"
 output: html_document
 ---
@@ -25,6 +25,8 @@ Balík `eyetools` poskytuje sadu funkcí pro zpracování a vizualizaci eyetrack
 ```{r prepare-data}
 # Načtení našich vygenerovaných dat
 raw_data <- read.csv("data/raw_data.csv")
+View(raw_data)
+
 et_data <- raw_data %>%
   rename(
     pID = subject_id,
@@ -33,6 +35,7 @@ et_data <- raw_data %>%
     time = timestamp,
   ) %>%
   select(pID, trial, time, x, y)
+
 aoi_sets <- read.csv("data/aois.csv") %>%
   select(x, y, width_radius = width, height)
 aoi_names <- read.csv("data/aois.csv") %>%
@@ -63,6 +66,8 @@ plot_spatial(et_data, fixations, AOIs = aoi_sets)
 
 ```{r plot-sequential}
 plot_seq(et_data, pID_values = 1, trial_values = 1)
+plot_seq(et_data, pID_values = 2, trial_values = 1)
+plot_seq(et_data, pID_values = 3, trial_values = 1)
 ```
 
 ```{r plot-spatial}

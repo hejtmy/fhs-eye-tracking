@@ -1,6 +1,6 @@
 ---
-title: "3. Analýza reálných dat (Dataset HCL)"
-author: "Antigravity"
+title: "4. Analýza reálných dat (Dataset HCL)"
+author: "Lukáš Hejtmánek"
 date: "`r Sys.Date()`"
 output: html_document
 ---
