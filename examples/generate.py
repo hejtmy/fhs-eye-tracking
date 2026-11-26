@@ -15,6 +15,7 @@ recordings:
     visual-search/   a plain CSV, as from any screen-based tracker
     glasses-shelf/   Tobii Pro Lab data export (TSV) of Tobii Pro Glasses 2
     glasses-raw/     livedata.json.gz as found on a Glasses 2 SD card
+    four-faces/      a plain CSV of a free-viewing task with four pictures per screen
 """
 import gzip
 import json
@@ -373,6 +374,103 @@ def make_glasses(rng):
         defaults=dict(width_px=W, height_px=H, geometry="camera", fov_deg=82)), indent=2, ensure_ascii=False))
 
 
+# ----------------------------------------------------------------------------- 3 · four faces on a screen
+
+EMOTIONS = ("Angry", "Sad", "Happy", "Neutral")
+QUADRANTS = [(480, 290), (1440, 290), (480, 790), (1440, 790)]
+TILE = (560, 400)   # width and height of each picture
+FIRST_LOOK = dict(Angry=0.64, Sad=0.08, Happy=0.16, Neutral=0.12)   # vigilance: the threatening face captures the first look…
+LATER_LOOK = dict(Angry=0.07, Sad=0.22, Happy=0.45, Neutral=0.26)   # …and is avoided afterwards
+
+
+def draw_face(draw, cx, cy, emotion):
+    ink = "#2b2620"
+    draw.ellipse([cx - 120, cy - 120, cx + 120, cy + 120], fill="#f1d9a7", outline=ink, width=5)
+    for side in (-1, 1):
+        draw.ellipse([cx + side * 45 - 13, cy - 38, cx + side * 45 + 13, cy - 12], fill=ink)
+        inner, outer = dict(Angry=(-52, -78), Sad=(-76, -56), Happy=(-66, -66), Neutral=(-62, -62))[emotion]
+        draw.line([(cx + side * 22, cy + inner), (cx + side * 72, cy + outer)], fill=ink, width=7)
+    if emotion == "Happy":
+        draw.arc([cx - 62, cy - 10, cx + 62, cy + 78], 20, 160, fill=ink, width=7)
+    elif emotion == "Neutral":
+        draw.line([(cx - 48, cy + 55), (cx + 48, cy + 55)], fill=ink, width=7)
+    else:
+        draw.arc([cx - 56, cy + 38, cx + 56, cy + 112], 200, 340, fill=ink, width=7)
+        if emotion == "Sad":
+            draw.ellipse([cx + 62, cy - 4, cx + 76, cy + 22], fill="#5b8fb0")
+
+
+def draw_faces(layout, path):
+    image = Image.new("RGB", (W, H), "#eceef0")
+    draw = ImageDraw.Draw(image)
+    for emotion, (cx, cy) in zip(layout, QUADRANTS):
+        draw.rounded_rectangle([cx - TILE[0] / 2, cy - TILE[1] / 2, cx + TILE[0] / 2, cy + TILE[1] / 2], radius=18, fill="#fbf8f2", outline="#b9b4aa", width=3)
+        draw_face(draw, cx, cy, emotion)
+    draw.line([(W / 2 - 14, H / 2), (W / 2 + 14, H / 2)], fill="#555", width=3)
+    draw.line([(W / 2, H / 2 - 14), (W / 2, H / 2 + 14)], fill="#555", width=3)
+    image.save(path, optimize=True)
+
+
+def faces_plan(rng, layout, speed, length=6000, distracted=False):
+    """Start at the centre, let one face capture the first look, then wander with changing preferences.
+
+    A distracted participant now and then glances below the screen, at the keyboard.
+    """
+    where = dict(zip(layout, QUADRANTS))
+    spot = lambda emotion: (where[emotion][0] + rng.normal(0, 75), where[emotion][1] + rng.normal(0, 60))  # noqa: E731
+    plan, clock = [(W / 2, H / 2, rng.uniform(220, 330))], 300.0
+    current = str(rng.choice(EMOTIONS, p=[FIRST_LOOK[e] for e in EMOTIONS]))
+    while clock < length + 400:
+        stay = duration(rng, 250 * speed)
+        plan.append((*spot(current), stay))
+        clock += stay + 45
+        if distracted and clock > 1500 and rng.uniform() < 0.07:
+            glance = rng.uniform(280, 520)
+            plan.append((rng.uniform(700, 1250), rng.uniform(1170, 1330), glance))
+            clock += glance + 60
+        if rng.uniform() > 0.62:   # move on to another face
+            others = [e for e in EMOTIONS if e != current]
+            weights = np.array([(FIRST_LOOK if clock < 700 else LATER_LOOK)[e] for e in others])
+            current = str(rng.choice(others, p=weights / weights.sum()))
+    return plan
+
+
+def make_faces(rng):
+    folder = DATA / "four-faces"
+    (folder / "stimuli").mkdir(parents=True, exist_ok=True)
+    (folder / "truth").mkdir(exist_ok=True)
+    layouts = {f"set_{n}": [str(e) for e in rng.permutation(EMOTIONS)] for n in range(1, 9)}
+    for name, layout in layouts.items():
+        draw_faces(layout, folder / "stimuli" / f"{name}.png")
+    rows, truth, rate, length = [], [], 60, 6000
+    for p in range(1, 11):
+        participant = f"P{p:02d}"
+        speed, base, clock = rng.uniform(0.85, 1.2), rng.uniform(3.1, 4.3), 0.0
+        for trial, name in enumerate(rng.permutation(list(layouts)), 1):
+            time, x, y, _, fixations = eye(rng, faces_plan(rng, layouts[name], speed, length, distracted=p == 7), rate, SCREEN_PPD, rng.uniform(0.08, 0.16))
+            keep = time < length
+            time, x, y = time[keep], x[keep], y[keep]
+            pupil = pupil_size(rng, time, base, 0.08)
+            x, y, pupil, _, _ = lose_signal(rng, time, x, y, pupil, 0.2, 0.04)
+            rows.append(pd.DataFrame(dict(participant=participant, trial=trial, stimulus=name, time_ms=np.round(clock + time, 1),
+                                          gaze_x=np.round(x, 1), gaze_y=np.round(y, 1), pupil_mm=np.round(pupil, 3))))
+            truth += [dict(participant=participant, trial=trial, stimulus=name, fixation=i, **{k: round(v, 1) for k, v in f.items()})
+                      for i, f in enumerate(fixations, 1) if f["start"] < length]
+            clock += length + rng.uniform(900, 1300)
+    pd.concat(rows).to_csv(folder / "four_faces.csv", index=False)
+    pd.DataFrame(truth).to_csv(folder / "truth" / "fixations.csv", index=False)
+    (folder / "dataset.json").write_text(json.dumps(dict(
+        name="Four faces on a screen (free viewing)", provider="Generic CSV (any screen-based tracker)", synthetic=True,
+        description=("10 simulated participants look freely at four schematic faces (angry, sad, happy, neutral) for 6 seconds, 8 screens each; "
+                     "the faces change places from screen to screen. 60 samples per second, 1920 × 1080 screen (53 cm wide) at 60 cm. "
+                     "Participant P07 sometimes glances below the screen. The true fixations are in truth/fixations.csv."),
+        files=[dict(name="four_faces.csv", label="four_faces")],
+        stimuli={name: f"stimuli/{name}.png" for name in layouts},
+        defaults=dict(width_px=W, height_px=H, geometry="screen", screen_width_cm=53, distance_cm=60)), indent=2))
+    return [dict(name=emotion, shape="rect", x=round(cx - TILE[0] / 2), y=round(cy - TILE[1] / 2), w=TILE[0], h=TILE[1], stimulus=name)
+            for name, layout in layouts.items() for emotion, (cx, cy) in zip(layout, QUADRANTS)]
+
+
 # ----------------------------------------------------------------------------- example pipelines
 
 def pipeline(name, title, description, dataset, steps, tasks, branches=()):
@@ -390,7 +488,7 @@ def pipeline(name, title, description, dataset, steps, tasks, branches=()):
                                                             graph=dict(nodes=nodes, edges=edges)), indent=2, ensure_ascii=False))
 
 
-def make_pipelines(areas):
+def make_pipelines(areas, face_areas):
     search = ("load", dict(source=dict(dataset="visual-search"), width_px=W, height_px=H, geometry="screen", screen_width_cm=53, distance_cm=60))
     clean = [("blinks", dict(margin_ms=50)), ("interpolate", dict(max_gap_ms=75))]
     pipeline("01-samples-to-fixations", "From samples to fixations",
@@ -449,13 +547,31 @@ def make_pipelines(areas):
               "The gaze view has no picture: gaze is in scene-video coordinates and the video is not loaded. What can and cannot be concluded from positions?",
               "The I-VT threshold is 100 °/s here instead of 30. Lower it to 30. What happens, and why is head movement the reason?",
               "Compare fixation_mean_ms between the two tasks in the trial summary."])
+    faces = [("load", dict(source=dict(dataset="four-faces"), width_px=W, height_px=H, geometry="screen", screen_width_cm=53, distance_cm=60)),
+             ("offscreen", dict(margin_px=50)), *clean]
+    measure = [("fixations_ivt", dict(threshold=30)), ("aoi_draw", dict(aois=face_areas)), ("aoi_metrics", {})]
+    per_face = dict(table="aoi_metrics", by=["participant", "aoi"], stat="mean")
+    pipeline("06-four-faces", "Four faces: first look and lasting look",
+             "A free-viewing task with four pictures per screen: which face is looked at first, which one longest, and how that changes within a trial.",
+             "four-faces", [*faces, *measure, ("aggregate", dict(**per_face, layout="long"))],
+             ["Select “Remove off-screen gaze” and choose participant P07. Where was this person looking, and is that a measurement error or behaviour?",
+              "Select “Draw areas of interest” and open the editor. The faces change places between screens. What would go wrong with one fixed set of areas?",
+              "Select “Measure attention per area”. Which column tells you where gaze went first, and which one where it stayed longest?",
+              "In “Build a table for statistics”, which face has the shortest first_fixation_ms, and which the largest dwell_pct? Are they the same face?",
+              "The branch “Trim trials in time” keeps only the time after 3 seconds. Compare its final table with the main one. What changed for the angry face?",
+              "Select “Count transitions between areas”. From the angry face, where does gaze go next most often?",
+              "Switch the last step to Wide and download the CSV. Which test compares dwell_pct for Angry and Happy within participants?",
+              "Shrink every area to the face itself (the circle). Which measures change, and which conclusions survive?"],
+             branches=[(3, [("crop", dict(start_ms=3000, end_ms=0)), *measure, ("aggregate", dict(**per_face, layout="long"))]),
+                       (5, [("aoi_transitions", {})])])
 
 
 if __name__ == "__main__":
     rng = np.random.default_rng(2026)
     areas = make_visual_search(rng)
     make_glasses(rng)
-    make_pipelines(areas)
+    face_areas = make_faces(rng)   # after the others, so that their files stay exactly as they were
+    make_pipelines(areas, face_areas)
     for path in sorted(DATA.rglob("*")):
         if path.is_file():
             print(f"{path.stat().st_size / 1024:8.0f} kB  {path.relative_to(HERE)}")

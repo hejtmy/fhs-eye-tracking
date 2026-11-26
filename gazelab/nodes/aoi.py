@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from ..core import KEYS, Columns, Custom, Node, Number, PipelineError, Toggle, register, table, trial_info, trials, num
+from ..datasets import stimulus_key
 
 table("aois", "Areas of interest", "The regions as drawn or as named in the file.",
       name="Name of the area.", shape="rect or ellipse.", x="Left edge, pixels.", y="Top edge, pixels.", w="Width, pixels.",
@@ -56,12 +57,15 @@ def inside(shape, x, y):
 def assign(frame, shapes):
     """Name of the first listed shape that contains each row's x, y (empty when none does)."""
     x, y = frame["x"].to_numpy(float), frame["y"].to_numpy(float)
-    stimulus = frame["stimulus"].to_numpy() if "stimulus" in frame else None
+    stimulus = None
+    if "stimulus" in frame:  # compared by key, worked out once per distinct label; missing labels (code -1) get the last, empty key
+        codes, names = pd.factorize(frame["stimulus"])
+        stimulus = np.array([*map(stimulus_key, names), ""], object)[codes]
     label = np.full(len(frame), "", object)
     for shape in shapes:
         hit = inside(shape, x, y) & (label == "")
         if shape["stimulus"]:
-            hit &= (stimulus == shape["stimulus"]) if stimulus is not None else False
+            hit &= (stimulus == stimulus_key(shape["stimulus"])) if stimulus is not None else False
         label[hit] = shape["name"]
     return label
 
@@ -231,8 +235,8 @@ class AoiMetrics(Node):
         info = trial_info(data.samples).drop(columns="trial_start")
         grid = info.merge(pd.DataFrame(dict(aoi=names)), how="cross")
         if "aois" in data and "stimulus" in data["aois"] and "stimulus" in grid:
-            scope = data["aois"].groupby("name")["stimulus"].agg(set).to_dict()
-            applies = [("" in scope[a]) or (s in scope[a]) for a, s in zip(grid["aoi"], grid["stimulus"])]
+            scope = data["aois"].groupby("name")["stimulus"].agg(lambda names: {stimulus_key(n) for n in names}).to_dict()
+            applies = [("" in scope[a]) or (stimulus_key(s) in scope[a]) for a, s in zip(grid["aoi"], grid["stimulus"])]
             grid = grid[applies]
         out = grid.merge(measured, on=[*KEYS, "aoi"], how="left").merge(total, on=KEYS, how="left")
         for column in ("fixation_count", "dwell_ms", "visits"):

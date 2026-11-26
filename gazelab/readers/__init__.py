@@ -128,6 +128,8 @@ def detect(path: Path) -> Reader:
     if not start.strip():
         raise PipelineError(f"“{path.name}” is empty or not a text file. Export samples as text (CSV/TSV), EyeLink ASC or Tobii livedata.json.")
     best = max(READERS.values(), key=lambda r: r.sniff(path, start))
+    if path.suffix.lower() == ".xlsx" and best.sniff(path, start) < 0.5:
+        raise PipelineError(f"“{path.name}” is an Excel workbook, but not one saved by the WebGazer experiment. Save the sheet with samples as CSV and upload that.")
     return best
 
 

@@ -71,6 +71,16 @@ def test_idt_works_at_any_sampling_rate_and_across_missing_rows(workspace, rate,
     assert np.allclose(fixations[["x", "y"]].to_numpy(), [[100, 100], [100, 100], [600, 100], [600, 500]], atol=12)   # pymovements' I-DT takes in the first saccade sample
 
 
+def test_idt_skips_samples_that_stand_alone_between_gaps(workspace):
+    """Webcam trackers deliver frames unevenly; a sample cut off on both sides cannot be a fixation, and pymovements cannot take it."""
+    frame = recording(rate=100)
+    frame = frame.drop(index=frame.index[((frame.time > 0) & (frame.time < 50)) | ((frame.time > 600) & (frame.time < 640)) | ((frame.time > 640) & (frame.time < 680))])
+    data = run(workspace, ("fixations_idt", dict(dispersion=1.0, min_duration_ms=100)), frame=frame)
+    assert "2 samples stood alone" in data.notes[-1]
+    fixations = data["fixations"]
+    assert fixations["start"].iloc[0] == pytest.approx(50)   # still counted from the trial's first sample, which I-DT did not get
+
+
 def test_blinks_are_found_and_their_edges_removed(workspace):
     data = run(workspace, ("blinks", dict(margin_ms=30)))
     blink = data["blinks"].iloc[0]
@@ -119,6 +129,23 @@ def test_baseline_correction_and_its_exclusion_rule(workspace):
     assert "already baseline-corrected" in twice["n2"].error
 
 
+def test_drift_corrections_hold_from_their_trial_on_and_add_up(workspace):
+    frame = pd.concat([recording(noise=0).assign(trial=t, time=lambda f, t=t: f.time + 3000 * t) for t in (1, 2, 3, 4)])
+    data = run(workspace, ("drift", dict(rows="trial,dx,dy\n2,-40,10\n4,15,-10\n")), frame=frame)
+    assert data["drift"].set_index("trial")[["dx", "dy"]].to_numpy().tolist() == [[0, 0], [-40, 10], [-40, 10], [-25, 0]]
+    assert data.samples.groupby("trial").x.first().to_dict() == {"1": 100, "2": 60, "3": 60, "4": 75}
+    assert data.samples.x.isna().sum() == frame.x.isna().sum()   # missing gaze stays missing
+
+    runner, load = workspace(frame)
+    untouched = runner.run(chain(load, ("drift", {})))["n1"].bundle
+    assert np.allclose(untouched.samples.x, frame.x, equal_nan=True) and "No corrections entered yet" in untouched.notes[-1]
+    same = runner.run(chain(load, ("drift", dict(rows="participant;trial;dx;dy\nP1;3;5;0\n"))))["n1"].bundle
+    assert same["drift"].dx.tolist() == [0, 0, 5, 5]
+    assert "no trial “9” for participant “P1”" in runner.run(chain(load, ("drift", dict(rows="participant,trial,dx,dy\nP1,9,5,0\n"))))["n1"].error
+    assert "must be a number" in runner.run(chain(load, ("drift", dict(rows="trial,dx,dy\n2,left,0\n"))))["n1"].error
+    assert "before detecting fixations" in runner.run(chain(load, IVT, ("drift", dict(rows="trial,dx,dy\n2,5,0\n"))))["n2"].error
+
+
 def test_offscreen_gaze_becomes_missing(workspace):
     frame = recording(noise=0)
     frame.loc[frame.time == 100, "x"] = 5000
@@ -146,6 +173,13 @@ def test_areas_can_belong_to_one_stimulus(workspace):
     data = run(workspace, IVT, ("aoi_draw", dict(aois=areas)), ("aoi_metrics", {}), frame=frame)
     assert data["fixations"].query("trial == '2'")["aoi"].tolist() == ["", "Right", ""]
     assert len(data["aoi_metrics"]) == 3   # Left applies to trial 1 only; Right to both
+
+
+def test_areas_match_stimulus_labels_written_as_file_names(workspace):
+    frame = pd.concat([recording().assign(trial=1, stimulus="Face – left, 1.PNG"), recording().assign(trial=2, stimulus="b.jpg")])
+    areas = [dict(AREAS[0], stimulus="Face _ left_ 1"), AREAS[1]]   # drawn on the uploaded image, which got a file-safe name
+    data = run(workspace, IVT, ("aoi_draw", dict(aois=areas)), ("aoi_metrics", {}), frame=frame)
+    assert data["fixations"].query("trial == '1'")["aoi"].tolist()[0] == "Left" and len(data["aoi_metrics"]) == 3
 
 
 def test_visits_transitions_and_patterns_follow_the_viewing_order(workspace):

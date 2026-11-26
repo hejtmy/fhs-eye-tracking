@@ -23,16 +23,28 @@ def safe_name(name, fallback="file"):
     return name[:120] or fallback
 
 
+IMAGE_SUFFIX = re.compile(r"\.(png|jpe?g|webp|gif|bmp|tiff?)$", re.IGNORECASE)
+
+
+def stimulus_key(value):
+    """What a stimulus label and an image name are compared by: no image extension, the characters an upload keeps, any case.
+
+    “Přednáška – Lukavský (12x6 in, na šířku).png” in the data and the uploaded image “Přednáška _ Lukavský (12x6 in_ na šířku)” share a key.
+    """
+    if value is None or value != value or not str(value).strip():
+        return ""
+    return safe_name(IMAGE_SUFFIX.sub("", str(value).strip())).casefold()
+
+
 def match_stimulus(names, value):
-    """Match a stimulus label from the data to an image name: exact, without extension, ignoring case, or the only image."""
+    """Match a stimulus label from the data to an image name: exact, else by stimulus_key, else the only image."""
     if value is not None and value == value:
-        stem = Path(str(value)).stem
-        lowered = {n.casefold(): n for n in names}
-        for candidate in (str(value), stem):
-            if candidate in names:
-                return candidate
-        if stem.casefold() in lowered:
-            return lowered[stem.casefold()]
+        if str(value) in names:
+            return str(value)
+        key = stimulus_key(value)
+        found = next((n for n in names if stimulus_key(n) == key), None) if key else None
+        if found is not None:
+            return found
     return next(iter(names)) if len(names) == 1 else None
 
 

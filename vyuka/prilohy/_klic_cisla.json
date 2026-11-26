@@ -1,0 +1,493 @@
+{
+ "surova_data": {
+  "radku": 1080,
+  "chybi": 58,
+  "chybi_pct": 5.4,
+  "mimo": 78,
+  "mimo_pct": 7.2,
+  "mimo_po_pokusech": {
+   "1": 0,
+   "2": 24,
+   "3": 54
+  },
+  "chybi_po_pokusech": {
+   "1": 29,
+   "2": 29,
+   "3": 0
+  },
+  "krok_ms": 16.7
+ },
+ "ivt": {
+  "ppd": 40.3,
+  "ucastnik": "P01",
+  "pokus": 1,
+  "prvni_vzorek": 7,
+  "useky": [
+   {
+    "typ": "F",
+    "od": 1,
+    "do": 10,
+    "trvani_ms": 167,
+    "x": 957,
+    "y": 540
+   },
+   {
+    "typ": "S",
+    "od": 11,
+    "do": 13,
+    "trvani_ms": 50,
+    "x": 1314,
+    "y": 714
+   },
+   {
+    "typ": "F",
+    "od": 14,
+    "do": 22,
+    "trvani_ms": 150,
+    "x": 1487,
+    "y": 792
+   },
+   {
+    "typ": "S",
+    "od": 23,
+    "do": 23,
+    "trvani_ms": 17,
+    "x": 1461,
+    "y": 846
+   },
+   {
+    "typ": "F",
+    "od": 24,
+    "do": 30,
+    "trvani_ms": 117,
+    "x": 1468,
+    "y": 846
+   }
+  ]
+ },
+ "scanpath_P01": {
+  "retezec": "VZVNV",
+  "pocet_fixaci": 17,
+  "metriky": {
+   "Z": {
+    "pocet_fixaci": 1,
+    "dwell_ms": 166,
+    "ttff_ms": 750,
+    "prvni_fixace_ms": 166,
+    "navstevy": 1,
+    "navraty": 0
+   },
+   "S": {
+    "pocet_fixaci": 0,
+    "dwell_ms": 0,
+    "ttff_ms": null,
+    "prvni_fixace_ms": null,
+    "navstevy": 0,
+    "navraty": 0
+   },
+   "V": {
+    "pocet_fixaci": 11,
+    "dwell_ms": 2799,
+    "ttff_ms": 317,
+    "prvni_fixace_ms": 316,
+    "navstevy": 3,
+    "navraty": 2
+   },
+   "N": {
+    "pocet_fixaci": 4,
+    "dwell_ms": 916,
+    "ttff_ms": 2350,
+    "prvni_fixace_ms": 233,
+    "navstevy": 1,
+    "navraty": 0
+   }
+  },
+  "prechody": {
+   "Z": {
+    "Z": 0,
+    "S": 0,
+    "V": 1,
+    "N": 0
+   },
+   "S": {
+    "Z": 0,
+    "S": 0,
+    "V": 0,
+    "N": 0
+   },
+   "V": {
+    "Z": 1,
+    "S": 0,
+    "V": 0,
+    "N": 1
+   },
+   "N": {
+    "Z": 0,
+    "S": 0,
+    "V": 1,
+    "N": 0
+   }
+  }
+ },
+ "scanpath_P02": {
+  "retezec": "ZVZVNVSVNZ",
+  "pocet_fixaci": 17,
+  "metriky": {
+   "Z": {
+    "pocet_fixaci": 3,
+    "dwell_ms": 950,
+    "ttff_ms": 317,
+    "prvni_fixace_ms": 150,
+    "navstevy": 3,
+    "navraty": 2
+   },
+   "S": {
+    "pocet_fixaci": 1,
+    "dwell_ms": 183,
+    "ttff_ms": 4150,
+    "prvni_fixace_ms": 183,
+    "navstevy": 1,
+    "navraty": 0
+   },
+   "V": {
+    "pocet_fixaci": 10,
+    "dwell_ms": 1950,
+    "ttff_ms": 583,
+    "prvni_fixace_ms": 83,
+    "navstevy": 4,
+    "navraty": 3
+   },
+   "N": {
+    "pocet_fixaci": 2,
+    "dwell_ms": 533,
+    "ttff_ms": 2167,
+    "prvni_fixace_ms": 150,
+    "navstevy": 2,
+    "navraty": 1
+   }
+  },
+  "prechody": {
+   "Z": {
+    "Z": 0,
+    "S": 0,
+    "V": 2,
+    "N": 0
+   },
+   "S": {
+    "Z": 0,
+    "S": 0,
+    "V": 1,
+    "N": 0
+   },
+   "V": {
+    "Z": 1,
+    "S": 1,
+    "V": 0,
+    "N": 2
+   },
+   "N": {
+    "Z": 1,
+    "S": 0,
+    "V": 1,
+    "N": 0
+   }
+  }
+ },
+ "scanpath_P04": {
+  "retezec": "ZSVNVNSNS",
+  "pocet_fixaci": 19,
+  "metriky": {
+   "Z": {
+    "pocet_fixaci": 1,
+    "dwell_ms": 133,
+    "ttff_ms": 350,
+    "prvni_fixace_ms": 133,
+    "navstevy": 1,
+    "navraty": 0
+   },
+   "S": {
+    "pocet_fixaci": 8,
+    "dwell_ms": 1900,
+    "ttff_ms": 583,
+    "prvni_fixace_ms": 383,
+    "navstevy": 3,
+    "navraty": 2
+   },
+   "V": {
+    "pocet_fixaci": 3,
+    "dwell_ms": 766,
+    "ttff_ms": 1617,
+    "prvni_fixace_ms": 133,
+    "navstevy": 2,
+    "navraty": 1
+   },
+   "N": {
+    "pocet_fixaci": 6,
+    "dwell_ms": 1183,
+    "ttff_ms": 1850,
+    "prvni_fixace_ms": 116,
+    "navstevy": 3,
+    "navraty": 2
+   }
+  },
+  "prechody": {
+   "Z": {
+    "Z": 0,
+    "S": 1,
+    "V": 0,
+    "N": 0
+   },
+   "S": {
+    "Z": 0,
+    "S": 0,
+    "V": 1,
+    "N": 1
+   },
+   "V": {
+    "Z": 0,
+    "S": 0,
+    "V": 0,
+    "N": 2
+   },
+   "N": {
+    "Z": 0,
+    "S": 2,
+    "V": 1,
+    "N": 0
+   }
+  }
+ },
+ "levenshtein": {
+  "P01-P02": 5,
+  "P01-P04": 6,
+  "P02-P04": 5
+ },
+ "levenshtein_prvnich_6_navstev": {
+  "P01-P02": [
+   "VZVNV",
+   "ZVZVNV",
+   1
+  ],
+  "P01-P04": [
+   "VZVNV",
+   "ZSVNVN",
+   3
+  ],
+  "P02-P04": [
+   "ZVZVNV",
+   "ZSVNVN",
+   3
+  ]
+ },
+ "rozlozeni": {
+  "V": {
+   "x": 200,
+   "y": 90,
+   "w": 560,
+   "h": 400
+  },
+  "Z": {
+   "x": 1160,
+   "y": 90,
+   "w": 560,
+   "h": 400
+  },
+  "N": {
+   "x": 200,
+   "y": 590,
+   "w": 560,
+   "h": 400
+  },
+  "S": {
+   "x": 1160,
+   "y": 590,
+   "w": 560,
+   "h": 400
+  }
+ },
+ "t_testy": {
+  "dwell_pct veselý vs zlostný (celý pokus)": {
+   "t": 3.34,
+   "df": 9,
+   "p": 0.0086
+  },
+  "dwell_pct veselý vs zlostný (po 3 s)": {
+   "t": 11.5,
+   "df": 9,
+   "p": 1.1e-06
+  },
+  "first_fixation_ms zlostný vs veselý": {
+   "t": -8.13,
+   "df": 9,
+   "p": 1.9e-05
+  },
+  "hledání: first_fixation_ms hard vs easy": {
+   "t": 14.31,
+   "df": 7,
+   "p": 1.9e-06
+  }
+ },
+ "ctyri_obliceje_prumery": {
+  "zlostný": {
+   "first_fixation_ms": 596.5,
+   "dwell_pct": 18.4,
+   "fixation_count": 3.0
+  },
+  "veselý": {
+   "first_fixation_ms": 1763.7,
+   "dwell_pct": 27.3,
+   "fixation_count": 4.6
+  },
+  "neutrální": {
+   "first_fixation_ms": 2023.1,
+   "dwell_pct": 25.3,
+   "fixation_count": 3.8
+  },
+  "smutný": {
+   "first_fixation_ms": 2196.3,
+   "dwell_pct": 22.6,
+   "fixation_count": 3.7
+  }
+ },
+ "ctyri_obliceje_po3s_dwell_pct": {
+  "zlostný": 9.1,
+  "veselý": 31.0,
+  "neutrální": 32.2,
+  "smutný": 27.7
+ },
+ "hledani_prumery": {
+  "easy": {
+   "first_fixation_ms": 676.0,
+   "dwell_ms": 696.0
+  },
+  "hard": {
+   "first_fixation_ms": 2066.0,
+   "dwell_ms": 717.0
+  }
+ },
+ "zornice": {
+  "po_pokusech": [
+   {
+    "ucastnik": "A",
+    "pokus": 1,
+    "obtiznost": "těžká",
+    "uloha": 3.791,
+    "baseline": 3.414,
+    "zmena": 0.377
+   },
+   {
+    "ucastnik": "A",
+    "pokus": 2,
+    "obtiznost": "lehká",
+    "uloha": 3.419,
+    "baseline": 3.432,
+    "zmena": -0.013
+   },
+   {
+    "ucastnik": "A",
+    "pokus": 3,
+    "obtiznost": "střední",
+    "uloha": 3.582,
+    "baseline": 3.417,
+    "zmena": 0.166
+   },
+   {
+    "ucastnik": "A",
+    "pokus": 4,
+    "obtiznost": "těžká",
+    "uloha": 3.797,
+    "baseline": 3.399,
+    "zmena": 0.399
+   },
+   {
+    "ucastnik": "A",
+    "pokus": 5,
+    "obtiznost": "střední",
+    "uloha": 3.611,
+    "baseline": 3.367,
+    "zmena": 0.244
+   },
+   {
+    "ucastnik": "A",
+    "pokus": 6,
+    "obtiznost": "lehká",
+    "uloha": 3.467,
+    "baseline": 3.424,
+    "zmena": 0.043
+   },
+   {
+    "ucastnik": "B",
+    "pokus": 1,
+    "obtiznost": "střední",
+    "uloha": 4.268,
+    "baseline": 4.089,
+    "zmena": 0.179
+   },
+   {
+    "ucastnik": "B",
+    "pokus": 2,
+    "obtiznost": "těžká",
+    "uloha": 4.376,
+    "baseline": 4.065,
+    "zmena": 0.311
+   },
+   {
+    "ucastnik": "B",
+    "pokus": 3,
+    "obtiznost": "lehká",
+    "uloha": 4.127,
+    "baseline": 4.118,
+    "zmena": 0.009
+   },
+   {
+    "ucastnik": "B",
+    "pokus": 4,
+    "obtiznost": "lehká",
+    "uloha": 4.085,
+    "baseline": 4.133,
+    "zmena": -0.048
+   },
+   {
+    "ucastnik": "B",
+    "pokus": 5,
+    "obtiznost": "těžká",
+    "uloha": 4.396,
+    "baseline": 4.065,
+    "zmena": 0.331
+   },
+   {
+    "ucastnik": "B",
+    "pokus": 6,
+    "obtiznost": "střední",
+    "uloha": 4.204,
+    "baseline": 4.03,
+    "zmena": 0.174
+   }
+  ],
+  "prumer_zmeny": {
+   "A": {
+    "lehká": 0.015,
+    "střední": 0.205,
+    "těžká": 0.388
+   },
+   "B": {
+    "lehká": -0.019,
+    "střední": 0.177,
+    "těžká": 0.321
+   }
+  },
+  "prumer_surove": {
+   "A": {
+    "lehká": 3.443,
+    "střední": 3.597,
+    "těžká": 3.794
+   },
+   "B": {
+    "lehká": 4.106,
+    "střední": 4.236,
+    "těžká": 4.386
+   }
+  },
+  "chybi_pct": 2.5
+ }
+}

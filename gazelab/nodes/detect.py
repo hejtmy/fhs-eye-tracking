@@ -146,9 +146,19 @@ class FixationsIDT(GazeStep):
         time, stretch, step = even_clock(data.samples, period)
         return time, stretch, step, max(2, round(p["min_duration_ms"] / period))
 
-    def gaze(self, data, p):
+    def used(self, p, data):
+        """(time, stretch, alone): the samples I-DT is given, and which ones it is not.
+
+        A sample alone between two gaps in the timestamps (common with webcam trackers, whose frames
+        arrive unevenly) can never be a fixation, and pymovements' I-DT cannot take a stretch of one sample.
+        """
         time, stretch, *_ = self.clock_of(p, data)
-        return to_gaze(data, time=time, stretch=stretch)
+        alone = np.bincount(stretch)[stretch] < 2
+        return time[~alone], stretch[~alone], alone
+
+    def gaze(self, data, p):
+        time, stretch, alone = self.used(p, data)
+        return to_gaze(data.update(samples=data.samples[~alone].reset_index(drop=True)), time=time, stretch=stretch)
 
     def clock(self, p, data):
         step = self.clock_of(p, data)[2]
@@ -165,10 +175,20 @@ class FixationsIDT(GazeStep):
         ]
 
     def keep(self, data, gaze, p):
-        fixations = events_table(gaze, "fixation", data.samples, "fixation")
+        alone = self.used(p, data)[2]
+        given = data.samples[~alone].reset_index(drop=True)
+        fixations = events_table(gaze, "fixation", given, "fixation")
+        if alone.any() and len(fixations):  # times count from the first sample of the trial, also when I-DT was not given it
+            late = (given.groupby(KEYS, sort=False)["time"].min() - data.samples.groupby(KEYS, sort=False)["time"].min()).rename("late")
+            late = fixations[KEYS].merge(late.reset_index(), on=KEYS, how="left")["late"].fillna(0).to_numpy()
+            fixations["start"] += late
+            fixations["end"] += late
         period, shortest = 1000 / data.meta["sampling_hz"], self.clock_of(p, data)[3]
         note = (f"I-DT: samples spread over less than {p['dispersion']:g}° for at least {shortest} samples "
                 f"({shortest * period:.0f} ms at this tracker's {period:.3g} ms per sample) are a fixation.") + found(fixations, "fixations")
+        if alone.any():
+            n = int(alone.sum())
+            note += f" {num(n)} sample{'s' if n > 1 else ''} stood alone between two gaps in the timestamps and could not be part of a fixation."
         return data.update(note, fixations=fixations)
 
 

@@ -1,0 +1,763 @@
+{
+  "name": "Four faces: first look and lasting look",
+  "description": "A free-viewing task with four pictures per screen: which face is looked at first, which one longest, and how that changes within a trial.",
+  "dataset": "four-faces",
+  "tasks": [
+    "Select “Remove off-screen gaze” and choose participant P07. Where was this person looking, and is that a measurement error or behaviour?",
+    "Select “Draw areas of interest” and open the editor. The faces change places between screens. What would go wrong with one fixed set of areas?",
+    "Select “Measure attention per area”. Which column tells you where gaze went first, and which one where it stayed longest?",
+    "In “Build a table for statistics”, which face has the shortest first_fixation_ms, and which the largest dwell_pct? Are they the same face?",
+    "The branch “Trim trials in time” keeps only the time after 3 seconds. Compare its final table with the main one. What changed for the angry face?",
+    "Select “Count transitions between areas”. From the angry face, where does gaze go next most often?",
+    "Switch the last step to Wide and download the CSV. Which test compares dwell_pct for Angry and Happy within participants?",
+    "Shrink every area to the face itself (the circle). Which measures change, and which conclusions survive?"
+  ],
+  "graph": {
+    "nodes": [
+      {
+        "id": "s1",
+        "kind": "load",
+        "params": {
+          "source": {
+            "dataset": "four-faces"
+          },
+          "width_px": 1920,
+          "height_px": 1080,
+          "geometry": "screen",
+          "screen_width_cm": 53,
+          "distance_cm": 60
+        }
+      },
+      {
+        "id": "s2",
+        "kind": "offscreen",
+        "params": {
+          "margin_px": 50
+        }
+      },
+      {
+        "id": "s3",
+        "kind": "blinks",
+        "params": {
+          "margin_ms": 50
+        }
+      },
+      {
+        "id": "s4",
+        "kind": "interpolate",
+        "params": {
+          "max_gap_ms": 75
+        }
+      },
+      {
+        "id": "s5",
+        "kind": "fixations_ivt",
+        "params": {
+          "threshold": 30
+        }
+      },
+      {
+        "id": "s6",
+        "kind": "aoi_draw",
+        "params": {
+          "aois": [
+            {
+              "name": "Happy",
+              "shape": "rect",
+              "x": 200,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_1"
+            },
+            {
+              "name": "Angry",
+              "shape": "rect",
+              "x": 1160,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_1"
+            },
+            {
+              "name": "Neutral",
+              "shape": "rect",
+              "x": 200,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_1"
+            },
+            {
+              "name": "Sad",
+              "shape": "rect",
+              "x": 1160,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_1"
+            },
+            {
+              "name": "Angry",
+              "shape": "rect",
+              "x": 200,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_2"
+            },
+            {
+              "name": "Sad",
+              "shape": "rect",
+              "x": 1160,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_2"
+            },
+            {
+              "name": "Neutral",
+              "shape": "rect",
+              "x": 200,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_2"
+            },
+            {
+              "name": "Happy",
+              "shape": "rect",
+              "x": 1160,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_2"
+            },
+            {
+              "name": "Sad",
+              "shape": "rect",
+              "x": 200,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_3"
+            },
+            {
+              "name": "Happy",
+              "shape": "rect",
+              "x": 1160,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_3"
+            },
+            {
+              "name": "Neutral",
+              "shape": "rect",
+              "x": 200,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_3"
+            },
+            {
+              "name": "Angry",
+              "shape": "rect",
+              "x": 1160,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_3"
+            },
+            {
+              "name": "Happy",
+              "shape": "rect",
+              "x": 200,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_4"
+            },
+            {
+              "name": "Angry",
+              "shape": "rect",
+              "x": 1160,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_4"
+            },
+            {
+              "name": "Neutral",
+              "shape": "rect",
+              "x": 200,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_4"
+            },
+            {
+              "name": "Sad",
+              "shape": "rect",
+              "x": 1160,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_4"
+            },
+            {
+              "name": "Neutral",
+              "shape": "rect",
+              "x": 200,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_5"
+            },
+            {
+              "name": "Angry",
+              "shape": "rect",
+              "x": 1160,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_5"
+            },
+            {
+              "name": "Happy",
+              "shape": "rect",
+              "x": 200,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_5"
+            },
+            {
+              "name": "Sad",
+              "shape": "rect",
+              "x": 1160,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_5"
+            },
+            {
+              "name": "Neutral",
+              "shape": "rect",
+              "x": 200,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_6"
+            },
+            {
+              "name": "Sad",
+              "shape": "rect",
+              "x": 1160,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_6"
+            },
+            {
+              "name": "Angry",
+              "shape": "rect",
+              "x": 200,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_6"
+            },
+            {
+              "name": "Happy",
+              "shape": "rect",
+              "x": 1160,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_6"
+            },
+            {
+              "name": "Angry",
+              "shape": "rect",
+              "x": 200,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_7"
+            },
+            {
+              "name": "Sad",
+              "shape": "rect",
+              "x": 1160,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_7"
+            },
+            {
+              "name": "Happy",
+              "shape": "rect",
+              "x": 200,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_7"
+            },
+            {
+              "name": "Neutral",
+              "shape": "rect",
+              "x": 1160,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_7"
+            },
+            {
+              "name": "Sad",
+              "shape": "rect",
+              "x": 200,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_8"
+            },
+            {
+              "name": "Neutral",
+              "shape": "rect",
+              "x": 1160,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_8"
+            },
+            {
+              "name": "Happy",
+              "shape": "rect",
+              "x": 200,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_8"
+            },
+            {
+              "name": "Angry",
+              "shape": "rect",
+              "x": 1160,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_8"
+            }
+          ]
+        }
+      },
+      {
+        "id": "s7",
+        "kind": "aoi_metrics",
+        "params": {}
+      },
+      {
+        "id": "s8",
+        "kind": "aggregate",
+        "params": {
+          "table": "aoi_metrics",
+          "by": [
+            "participant",
+            "aoi"
+          ],
+          "stat": "mean",
+          "layout": "long"
+        }
+      },
+      {
+        "id": "b11",
+        "kind": "crop",
+        "params": {
+          "start_ms": 3000,
+          "end_ms": 0
+        }
+      },
+      {
+        "id": "b12",
+        "kind": "fixations_ivt",
+        "params": {
+          "threshold": 30
+        }
+      },
+      {
+        "id": "b13",
+        "kind": "aoi_draw",
+        "params": {
+          "aois": [
+            {
+              "name": "Happy",
+              "shape": "rect",
+              "x": 200,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_1"
+            },
+            {
+              "name": "Angry",
+              "shape": "rect",
+              "x": 1160,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_1"
+            },
+            {
+              "name": "Neutral",
+              "shape": "rect",
+              "x": 200,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_1"
+            },
+            {
+              "name": "Sad",
+              "shape": "rect",
+              "x": 1160,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_1"
+            },
+            {
+              "name": "Angry",
+              "shape": "rect",
+              "x": 200,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_2"
+            },
+            {
+              "name": "Sad",
+              "shape": "rect",
+              "x": 1160,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_2"
+            },
+            {
+              "name": "Neutral",
+              "shape": "rect",
+              "x": 200,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_2"
+            },
+            {
+              "name": "Happy",
+              "shape": "rect",
+              "x": 1160,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_2"
+            },
+            {
+              "name": "Sad",
+              "shape": "rect",
+              "x": 200,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_3"
+            },
+            {
+              "name": "Happy",
+              "shape": "rect",
+              "x": 1160,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_3"
+            },
+            {
+              "name": "Neutral",
+              "shape": "rect",
+              "x": 200,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_3"
+            },
+            {
+              "name": "Angry",
+              "shape": "rect",
+              "x": 1160,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_3"
+            },
+            {
+              "name": "Happy",
+              "shape": "rect",
+              "x": 200,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_4"
+            },
+            {
+              "name": "Angry",
+              "shape": "rect",
+              "x": 1160,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_4"
+            },
+            {
+              "name": "Neutral",
+              "shape": "rect",
+              "x": 200,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_4"
+            },
+            {
+              "name": "Sad",
+              "shape": "rect",
+              "x": 1160,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_4"
+            },
+            {
+              "name": "Neutral",
+              "shape": "rect",
+              "x": 200,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_5"
+            },
+            {
+              "name": "Angry",
+              "shape": "rect",
+              "x": 1160,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_5"
+            },
+            {
+              "name": "Happy",
+              "shape": "rect",
+              "x": 200,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_5"
+            },
+            {
+              "name": "Sad",
+              "shape": "rect",
+              "x": 1160,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_5"
+            },
+            {
+              "name": "Neutral",
+              "shape": "rect",
+              "x": 200,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_6"
+            },
+            {
+              "name": "Sad",
+              "shape": "rect",
+              "x": 1160,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_6"
+            },
+            {
+              "name": "Angry",
+              "shape": "rect",
+              "x": 200,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_6"
+            },
+            {
+              "name": "Happy",
+              "shape": "rect",
+              "x": 1160,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_6"
+            },
+            {
+              "name": "Angry",
+              "shape": "rect",
+              "x": 200,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_7"
+            },
+            {
+              "name": "Sad",
+              "shape": "rect",
+              "x": 1160,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_7"
+            },
+            {
+              "name": "Happy",
+              "shape": "rect",
+              "x": 200,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_7"
+            },
+            {
+              "name": "Neutral",
+              "shape": "rect",
+              "x": 1160,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_7"
+            },
+            {
+              "name": "Sad",
+              "shape": "rect",
+              "x": 200,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_8"
+            },
+            {
+              "name": "Neutral",
+              "shape": "rect",
+              "x": 1160,
+              "y": 90,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_8"
+            },
+            {
+              "name": "Happy",
+              "shape": "rect",
+              "x": 200,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_8"
+            },
+            {
+              "name": "Angry",
+              "shape": "rect",
+              "x": 1160,
+              "y": 590,
+              "w": 560,
+              "h": 400,
+              "stimulus": "set_8"
+            }
+          ]
+        }
+      },
+      {
+        "id": "b14",
+        "kind": "aoi_metrics",
+        "params": {}
+      },
+      {
+        "id": "b15",
+        "kind": "aggregate",
+        "params": {
+          "table": "aoi_metrics",
+          "by": [
+            "participant",
+            "aoi"
+          ],
+          "stat": "mean",
+          "layout": "long"
+        }
+      },
+      {
+        "id": "b21",
+        "kind": "aoi_transitions",
+        "params": {}
+      }
+    ],
+    "edges": [
+      {
+        "source": "s1",
+        "target": "s2"
+      },
+      {
+        "source": "s2",
+        "target": "s3"
+      },
+      {
+        "source": "s3",
+        "target": "s4"
+      },
+      {
+        "source": "s4",
+        "target": "s5"
+      },
+      {
+        "source": "s5",
+        "target": "s6"
+      },
+      {
+        "source": "s6",
+        "target": "s7"
+      },
+      {
+        "source": "s7",
+        "target": "s8"
+      },
+      {
+        "source": "s4",
+        "target": "b11"
+      },
+      {
+        "source": "b11",
+        "target": "b12"
+      },
+      {
+        "source": "b12",
+        "target": "b13"
+      },
+      {
+        "source": "b13",
+        "target": "b14"
+      },
+      {
+        "source": "b14",
+        "target": "b15"
+      },
+      {
+        "source": "s6",
+        "target": "b21"
+      }
+    ]
+  }
+}

@@ -4,14 +4,19 @@ Off-screen gaze, blinks and smoothing are done by pymovements (see bridge.py).
 pymovements has no gap filling with a length limit and no pupil baseline, so
 those two steps are written here.
 """
+from io import StringIO
+
 import numpy as np
+import pandas as pd
 
 from ..bridge import GazeStep, call, cleaned_samples, events_table
-from ..core import Choice, Node, Number, PipelineError, pct, register, runs, table, trials, num
+from ..core import KEYS, Choice, Node, Number, PipelineError, Text, pct, register, runs, table, trials, num, with_trial_info
 
 table("blinks", "Blinks", "One row per blink that pymovements found in the pupil signal.",
       blink="Order of the blink within its trial.", start="Start, ms from the start of the trial.",
       end="Time of the blink's last sample, ms from the start of the trial.", duration="Length in ms.")
+table("drift", "Drift shifts", "One row per trial: how far its gaze was moved by drift correction.",
+      dx="Horizontal shift in px (positive = to the right).", dy="Vertical shift in px (positive = down).")
 
 CHANNELS = Choice("channels", "Apply to", "both", options=(("both", "Gaze and pupil"), ("gaze", "Gaze only"), ("pupil", "Pupil only")))
 
@@ -23,6 +28,83 @@ def chosen(channels):
 def removed(before, after):
     """How many samples lost a value in a cleaning step."""
     return int((after["masked"].to_numpy() & ~before["masked"].to_numpy()).sum())
+
+
+@register
+class Drift(Node):
+    kind = "drift"
+    title = "Correct drift"
+    group = "clean"
+    icon = "move"
+    summary = "Shift gaze back into place from a chosen trial onwards."
+    explain = """
+        During a session the tracker's estimate slowly slides away from where the person really looks: the head
+        moves, the person slumps in the chair, the light on a webcam changes. The whole gaze pattern then sits
+        some pixels off while its shape stays right. On the stimulus you see fixations landing just beside
+        the pictures, or gaze on a central fixation cross that is not at the centre.
+
+        Each row of the table moves gaze by `dx` and `dy` pixels **from the start of that trial to the end of
+        that participant's recording**. Rows add up: `dx = -40` at trial 3 and `dx = 15` at trial 7 shift
+        trials 3–6 by −40 px and trial 7 onwards by −25 px. So work forward: correct the first trial that is off,
+        then look at the later trials (already corrected) and add a row only where they still need a nudge.
+
+        Positive `dx` moves gaze right, positive `dy` moves it down. Leave out the participant column to apply
+        a row to everyone who has that trial. A shift moves everything by the same amount; it cannot repair a
+        calibration that is wrong in different ways in different parts of the screen.
+    """
+    question = "What justifies each shift: a fixation cross, the layout of the stimulus, or the result you hoped for? Write the reason down."
+    makes = ("samples", "drift")
+    view = "gaze"
+    params = (
+        Text("rows", "Corrections (CSV)", "participant,trial,dx,dy\n", multiline=True,
+             help="One row per correction, e.g. P01,3,-40,12. dx and dy in pixels; each row applies from that trial on."),
+    )
+
+    def run(self, data, p, ctx):
+        found = [name for name in ("fixations", "saccades") if name in data]
+        if found:
+            raise PipelineError(f"Correct drift before detecting {' and '.join(found)}: they were measured at the old gaze positions.")
+        s = data.samples
+        text = p["rows"].strip()
+        try:
+            rows = pd.read_csv(StringIO(text), sep=None, engine="python", dtype=str, skipinitialspace=True).dropna(how="all") if text else pd.DataFrame()
+        except Exception as exc:
+            raise PipelineError(f"The corrections could not be read: {exc}") from exc
+        rows.columns = [str(c).strip().casefold() for c in rows.columns]
+        if len(rows.columns) and not {"trial", "dx", "dy"} <= set(rows.columns):
+            raise PipelineError("The first line must name the columns trial, dx and dy (and optionally participant).")
+        for column in ("dx", "dy"):
+            if column in rows:
+                rows[column] = pd.to_numeric(rows[column].str.strip(), errors="coerce")
+                if rows[column].isna().any():
+                    raise PipelineError(f"Every {column} must be a number of pixels, like -40 or 12.5.")
+
+        time, who = s["time"].to_numpy(float), s["participant"].to_numpy()
+        starts = s.groupby(KEYS, sort=False)["time"].min()
+        dx, dy = np.zeros(len(s)), np.zeros(len(s))
+        for row in rows.to_dict("records"):
+            trial = row["trial"].strip()
+            people = [row["participant"].strip()] if "participant" in row else [w for w, t in starts.index if t == trial]
+            for person in people:
+                if (person, trial) not in starts:
+                    raise PipelineError(f"There is no trial “{trial}”" + (f" for participant “{person}”." if "participant" in row else "."))
+                later = (who == person) & (time >= starts[(person, trial)])   # this trial and everything recorded after it
+                dx[later] += row["dx"]
+                dy[later] += row["dy"]
+
+        samples = s.assign(x=s["x"] + dx, y=s["y"] + dy)
+        shifts = s[KEYS].assign(dx=dx, dy=dy).groupby(KEYS, sort=False).first().reset_index()
+        moved = int(((shifts["dx"] != 0) | (shifts["dy"] != 0)).sum())
+        if rows.empty:
+            note = "No corrections entered yet; gaze passes through unchanged."
+        else:
+            note = (f"{len(rows)} correction(s): gaze moved in {moved} of {len(shifts)} trials, "
+                    f"by up to {np.hypot(shifts['dx'], shifts['dy']).max():.0f} px.")
+        return data.update(note, samples=samples, drift=with_trial_info(shifts, s))
+
+    def headline(self, out):
+        shifts = out["drift"]
+        return f"{int(((shifts['dx'] != 0) | (shifts['dy'] != 0)).sum())} trials shifted"
 
 
 @register

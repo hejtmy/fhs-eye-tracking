@@ -9,7 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
-from conftest import EXAMPLES, chain, recording
+from conftest import EXAMPLES, chain, recording, webgazer_workbook
 
 import server.app as service
 
@@ -34,8 +34,8 @@ def test_catalog_describes_everything_the_app_draws():
     catalog = client.get("/api/catalog").json()
     assert {n["kind"] for n in catalog["nodes"]} >= {"load", "fixations_ivt", "aoi_metrics", "aggregate"}
     assert all(n["group"] in {g["id"] for g in catalog["groups"]} for n in catalog["nodes"])
-    assert {r["id"] for r in catalog["readers"]} == {"delimited", "tobii_prolab", "tobii_glasses2", "eyelink_asc"}
-    assert len(catalog["examples"]["pipelines"]) == 5 and len(catalog["examples"]["datasets"]) == 3
+    assert {r["id"] for r in catalog["readers"]} == {"delimited", "tobii_prolab", "tobii_glasses2", "eyelink_asc", "webgazer"}
+    assert len(catalog["examples"]["pipelines"]) == 6 and len(catalog["examples"]["datasets"]) == 4
     by_package = {n["kind"] for n in catalog["nodes"] if n["package"] == "pymovements"}
     assert by_package == {"offscreen", "blinks", "smooth", "fixations_ivt", "fixations_idt", "saccades", "fixations_file"} and catalog["packages"]["pymovements"]["version"]
     assert client.get("/api/health").json()["status"] == "ok"
@@ -65,6 +65,8 @@ def test_upload_probe_run_inspect_and_download():
     assert before["total"] == 1
     csv = client.post("/api/download", json=dict(step, table="fixations"))
     assert len(pd.read_csv(io.BytesIO(csv.content))) == 3 and "fixations.csv" in csv.headers["content-disposition"]
+    excel = client.post("/api/download", json=dict(step, table="fixations", excel=True))
+    assert excel.content.startswith(b"\xef\xbb\xbf") and pd.read_csv(io.BytesIO(excel.content), sep=";", decimal=",").shape == pd.read_csv(io.BytesIO(csv.content)).shape
     assert client.post("/api/table", json=dict(step, table="nope")).status_code == 422
 
 
@@ -106,6 +108,21 @@ def test_several_files_labels_and_stimulus_images():
     assert [f["label"] for f in smaller["files"]] == ["Anna"]
     assert client.delete(f"/api/datasets/{dataset['id']}").json() == dict(deleted=True)
     assert client.get(f"/api/datasets/{dataset['id']}").status_code == 422
+
+
+def test_webgazer_workbook_with_a_large_photo_placed_as_it_was_shown(tmp_path):
+    dataset = upload(("webgazer.xlsx", webgazer_workbook(tmp_path / "webgazer.xlsx").read_bytes()))
+    photo = io.BytesIO()
+    Image.new("RGB", (6000, 4000), "white").save(photo, "JPEG")
+    assert client.post(f"/api/datasets/{dataset['id']}/stimuli", files=[("files", ("3333.jpg", photo.getvalue()))]).json()["stimuli"] == ["3333"]
+    assert Image.open(io.BytesIO(client.get(f"/api/datasets/{dataset['id']}/stimuli/3333").content)).width == 2560   # shrunk, proportions kept
+
+    probe = client.post(f"/api/datasets/{dataset['id']}/probe", json=dict(reader="auto", options={})).json()
+    assert probe["reader"] == "webgazer" and probe["markers"] == 4
+    params = probe["suggestion"]["params"]
+    graph = chain(("load", dict(params, source=dict(dataset=dataset["id"], mapping=probe["suggestion"]["mapping"]))))
+    image = client.post("/api/view", json=dict(graph=graph, node="n0", view="gaze", trial="s2")).json()["layout"]["images"][0]
+    assert image["source"].endswith("/stimuli/3333") and image["sizing"] == "contain" and (image["x"], image["y"], image["xanchor"]) == (960, 540, "center")
 
 
 def test_uploads_are_checked(monkeypatch):

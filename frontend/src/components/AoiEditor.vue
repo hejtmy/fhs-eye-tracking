@@ -11,6 +11,7 @@ const emit = defineEmits(["close"]);
 const shapes = reactive(JSON.parse(JSON.stringify(props.areas)));
 const load = loadStepFor(props.nodeId);
 const width = load?.params.width_px || 1920, height = load?.params.height_px || 1080;
+const fit = load?.params.stimulus_fit === "contain" ? "xMidYMid meet" : "none"; // as the images were shown: fitted and centred, or stretched
 const datasetId = load?.params.source?.dataset;
 const stimuli = ref([]);
 const current = ref(""); // the stimulus on screen; "" when the data have none
@@ -21,7 +22,10 @@ const svg = ref(null);
 let drag = null;
 
 const visible = computed(() => shapes.map((s, i) => ({ s, i })).filter(({ s }) => !s.stimulus || s.stimulus === current.value));
-const dots = computed(() => fixations.value.filter((f) => !current.value || f.stimulus == null || f.stimulus === current.value));
+// Labels in the data may differ from image names (“3333.jpg” vs “3333”): compare them as gazelab.datasets.stimulus_key does.
+const key = (name) => String(name).trim().replace(/\.(png|jpe?g|webp|gif|bmp|tiff?)$/i, "").replace(/[^\p{L}\p{M}\p{N}_.\- ()[\]]+/gu, "_")
+  .replace(/^[ .]+|[ .]+$/g, "").slice(0, 120).toLowerCase();
+const dots = computed(() => fixations.value.filter((f) => !current.value || f.stimulus == null || key(f.stimulus) === key(current.value)));
 const unit = Math.max(width, height) / 400; // one “screen pixel” of line width, whatever the zoom
 
 onMounted(async () => {
@@ -95,7 +99,7 @@ const problem = computed(() => (shapes.some((s) => !String(s.name).trim()) ? "Ev
         <div class="aoi-main">
           <svg ref="svg" class="aoi-stage" :class="tool" :viewBox="`0 0 ${width} ${height}`" @pointerdown="down($event)" @pointermove="move" @pointerup="up" @pointercancel="up">
             <rect :width="width" :height="height" fill="#fff" />
-            <image v-if="current" :href="`/api/datasets/${datasetId}/stimuli/${encodeURIComponent(current)}`" :width="width" :height="height" preserveAspectRatio="none" opacity="0.9" />
+            <image v-if="current" :href="`/api/datasets/${datasetId}/stimuli/${encodeURIComponent(current)}`" :width="width" :height="height" :preserveAspectRatio="fit" opacity="0.9" />
             <circle v-for="(f, i) in dots" :key="i" :cx="f.x" :cy="f.y" :r="unit * 1.6" class="aoi-dot" />
             <g v-for="{ s, i } in visible" :key="i" class="aoi-shape" :class="{ selected: selected === i }" :style="{ '--w': unit + 'px' }">
               <ellipse v-if="s.shape === 'ellipse'" :cx="s.x + s.w / 2" :cy="s.y + s.h / 2" :rx="s.w / 2" :ry="s.h / 2" @pointerdown.stop="down($event, i)" />

@@ -1,0 +1,7 @@
+{
+  "name": "vyuka-word-export",
+  "private": true,
+  "description": "Markdown (vyuka/) -> Word, FHS Psychology Design System",
+  "scripts": { "build": "node convert.js ../.. .." },
+  "dependencies": { "docx": "^9.0.0", "marked": "^15.0.0" }
+}

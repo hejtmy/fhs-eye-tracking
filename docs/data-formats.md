@@ -86,6 +86,37 @@ Convert the EDF with SR Research's EDF2ASC (samples and events) and upload the
 trials are left out; all messages become markers. For binocular recordings
 choose the eye under *File format*. Pupil size is in EyeLink's arbitrary units.
 
+## WebGazer (webcam) experiments
+
+Upload the `.xlsx` workbook the experiment page saves (one per participant)
+together with the images that were shown; you can drop them all at once. The
+reader takes the samples from the sheet *Vzorky* and maps the columns itself:
+
+| Gaze Lab | Workbook | Notes |
+| --- | --- | --- |
+| Time | `cas_ms` | ms from the start of the experiment |
+| Gaze X, Gaze Y | `x_1920`, `y_1080` | already scaled to a 1920 × 1080 screen; values outside it are kept |
+| Trial | `faze` | `crossN` = fixation cross before image N, `sN` = image N |
+| Stimulus | `stimul` | the image's file name, or “fixační kříž” |
+
+The start of every phase becomes a marker. The sheet *Kalibrace* is
+summarised in the notes: the mean error of the calibration that was used.
+The sheet *AOI* is not read; it holds the experiment page's own dwell times,
+measured on the rectangle the image filled.
+
+**Images.** The experiment fits each image inside the screen, centred, on a
+grey background. The reader therefore sets *Stimulus images* in the Load step
+to *Fitted inside the screen, centred*. An area drawn around the whole image
+then gives the same sample counts as the *AOI* sheet. Upload the very images
+that were shown. If you upload a different version of an image, for
+example a portrait instead of a landscape poster, it will be placed wrongly.
+
+**What to expect.** Webcam estimates arrive about 30 times per second, at
+uneven intervals, and are off by a few degrees (hundreds of pixels,
+worse vertically). Prefer I-DT with a generous spread (2–3°) to I-VT. Samples that
+stand alone between two gaps in the timestamps are left out of I-DT, because
+a single sample cannot be a fixation. Draw only large areas of interest.
+
 ## Any other tracker: a table of samples
 
 CSV, TSV or other delimited text with one row per sample. The separator, the
@@ -110,12 +141,19 @@ bottom (Pupil Labs `norm_pos`) need flipping before upload.
 
 ## Stimulus images
 
-Upload PNG, JPEG or WebP images in the Load step. An image is shown behind
-the gaze of every trial whose *stimulus* value equals the image's file name
-(with or without extension, ignoring case). If a dataset has exactly one
-image, it is used for all trials. Images are stretched over the full width
-and height given in the Load step, so they should be screenshots of the whole
-screen (or the snapshot that gaze was mapped onto).
+Upload PNG, JPEG or WebP images in the Load step (up to 60 MB each; large
+photos are stored shrunk to 2560 px, which does not affect placement). An
+image is shown behind the gaze of every trial whose *stimulus* value is the
+image's file name: with or without extension, ignoring case, and ignoring
+characters that are replaced in uploaded file names (such as dashes and
+commas). Areas of interest drawn on an image are matched to trials the same
+way. If a dataset has exactly one image, it is used for all trials.
+
+The Load setting *Stimulus images* says how the images were shown. *Fill the
+whole screen* (the default) stretches them over the width and height given
+there, so they should be screenshots of the whole screen (or the snapshot
+that gaze was mapped onto). *Fitted inside the screen, centred* keeps their
+proportions and centres them, as WebGazer experiments do.
 
 ## Viewing geometry
 

@@ -63,3 +63,25 @@ def recording(rate=100, noise=0.5, seed=1):
     blink = (time >= 1020) & (time < 1220)
     x[blink], y[blink], pupil[blink] = np.nan, np.nan, np.nan
     return pd.DataFrame(dict(time=time, x=x, y=y, pupil=pupil))
+
+
+def webgazer_workbook(path):
+    """A small workbook laid out like the ones the WebGazer experiment saves: two images, each after a fixation cross."""
+    phases = (("cross1", "fixační kříž", 300), ("s1", "Přednáška – Lukavský (12x6 in, na šířku).png", 1000),
+              ("cross2", "fixační kříž", 300), ("s2", "3333.jpg", 1000))
+    rows, start = [], 0
+    for phase, stimulus, length in phases:
+        rows += [(start + t, phase, stimulus, t, 960 + t % 7, 540 - t % 5) for t in range(5, length, 33)]
+        start += length
+    calibration = [["SOUHRN POKUSŮ O KALIBRACI"] + [None] * 7,
+                   ["pokus", "zacatek", "okno_sirka_px", "okno_vyska_px", "pocet_kliknuti", "prumerna_odchylka_px", "presnost_pct", "pouzito_pro_experiment"],
+                   [1, "26. 11. 2026 10:50:01", 1280, 598, 45, 140, 55, "ne"], [2, "26. 11. 2026 10:54:52", 1280, 598, 45, 88, 71, "ano"],
+                   [None] * 8, ["KLIKNUTÍ NA KALIBRAČNÍ BODY"] + [None] * 7,
+                   ["pokus", "bod", "cil_x_px", "cil_y_px", "kliknuti_c", "cas_ms", "odhad_x_px", "odhad_y_px"], [2, 1, 130, 62, 1, 2829, 653, 74]]
+    with pd.ExcelWriter(path) as book:
+        pd.DataFrame([["List / sloupec", "Význam"]]).to_excel(book, sheet_name="Legenda", index=False, header=False)
+        pd.DataFrame([[1, "3333.jpg", 3.0, 0.03, 100]], columns=["poradi", "obrazek", "doba_pohledu_s", "prvni_pohled_s", "pocet_vzorku"]).to_excel(
+            book, sheet_name="AOI", index=False)
+        pd.DataFrame(rows, columns=["cas_ms", "faze", "stimul", "cas_ve_fazi_ms", "x_1920", "y_1080"]).to_excel(book, sheet_name="Vzorky", index=False)
+        pd.DataFrame(calibration).to_excel(book, sheet_name="Kalibrace", index=False, header=False)
+    return path

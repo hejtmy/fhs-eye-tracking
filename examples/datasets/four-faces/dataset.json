@@ -1,0 +1,29 @@
+{
+  "name": "Four faces on a screen (free viewing)",
+  "provider": "Generic CSV (any screen-based tracker)",
+  "synthetic": true,
+  "description": "10 simulated participants look freely at four schematic faces (angry, sad, happy, neutral) for 6 seconds, 8 screens each; the faces change places from screen to screen. 60 samples per second, 1920 \u00d7 1080 screen (53 cm wide) at 60 cm. Participant P07 sometimes glances below the screen. The true fixations are in truth/fixations.csv.",
+  "files": [
+    {
+      "name": "four_faces.csv",
+      "label": "four_faces"
+    }
+  ],
+  "stimuli": {
+    "set_1": "stimuli/set_1.png",
+    "set_2": "stimuli/set_2.png",
+    "set_3": "stimuli/set_3.png",
+    "set_4": "stimuli/set_4.png",
+    "set_5": "stimuli/set_5.png",
+    "set_6": "stimuli/set_6.png",
+    "set_7": "stimuli/set_7.png",
+    "set_8": "stimuli/set_8.png"
+  },
+  "defaults": {
+    "width_px": 1920,
+    "height_px": 1080,
+    "geometry": "screen",
+    "screen_width_cm": 53,
+    "distance_cm": 60
+  }
+}

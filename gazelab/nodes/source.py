@@ -101,6 +101,8 @@ class Load(Node):
                help="Fractions are multiplied by the width and height below."),
         Number("width_px", "Width", 1920, unit="px", min=16, max=20000, integer=True, help="Of the screen, or of the scene video for glasses."),
         Number("height_px", "Height", 1080, unit="px", min=16, max=20000, integer=True),
+        Choice("stimulus_fit", "Stimulus images", "stretch", options=(("stretch", "Fill the whole screen"), ("contain", "Fitted inside the screen, centred")),
+               help="How the images were shown. WebGazer experiments fit each image inside the screen on a grey background."),
         Choice("geometry", "Viewing geometry", "screen", options=(("screen", "Screen at a known distance"), ("camera", "Scene camera (glasses)")),
                help="Used to convert pixels to degrees of visual angle."),
         Number("screen_width_cm", "Screen width", 53, unit="cm", min=1, max=1000, step=0.5, when=dict(geometry="screen")),
@@ -200,7 +202,7 @@ class Load(Node):
                           screen_height_cm=round(width_cm * p["height_px"] / p["width_px"], 2), distance_cm=float(distance),
                           origin="upper left", sampling_rate=rate)
         meta = dict(dataset=dataset.id, width_px=p["width_px"], height_px=p["height_px"], px_per_deg=per_degree, sampling_hz=rate,
-                    experiment=experiment if rate else None, stimuli=dict(dataset.stimuli), pupil_unit="as recorded")
+                    experiment=experiment if rate else None, stimuli=dict(dataset.stimuli), stimulus_fit=p["stimulus_fit"], pupil_unit="as recorded")
         groups = samples.groupby(KEYS, sort=False).ngroups
         notes.insert(0, f"{num(len(samples))} samples · {samples['participant'].nunique()} participant(s) · {groups} trial(s) · "
                         f"about {meta['sampling_hz']:.0f} samples per second · time read as {dict(ms='milliseconds', s='seconds', us='microseconds')[unit]}, "

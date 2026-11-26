@@ -29,7 +29,7 @@ decision does to the data, at the moment they make it.
 - **Instant re-runs.** Changing a setting recomputes that step and those
   after it, and the counts on the pipeline update.
 
-## The five examples
+## The six examples
 
 Each opens with a short list of things to try (the blue strip at the top;
 step through it with the arrows). All data are simulated; the true fixations
@@ -42,12 +42,16 @@ are in each dataset's `truth/` folder.
 | Does effort show in the pupil? | Blink margins, interpolation limits and baselines for pupil data; why trial length confounds the comparison | 30 min |
 | Glasses: which product gets attention? | A Tobii Pro Lab export of Glasses 2: sensor rows, markers, mapped gaze, AOI hit columns, viewing patterns | 45 min |
 | Glasses: straight from the SD card | The raw packet format; scene-video coordinates; why the speed threshold is higher with a moving head | 20 min |
+| Four faces: first look and lasting look | Free viewing of four pictures per screen: gaze below the screen (P07), areas that move between screens, time to first fixation against dwell time, a time window, transitions, a paired t-test | 45 min |
 
 Effects built into the simulated data, so that there is something to find:
 
 - **Visual search.** In hard trials the target is fixated later (about 2.1 s
   against 0.7 s) and the pupil dilates more. Participant P06 has three times
   the noise and frequent signal loss.
+- **Four faces.** The angry face is fixated first (about 0.6 s against 1.8 s for the happy face) but gets the smallest
+  share of dwell time, and after the third second its share halves: vigilance followed by avoidance. Participant P07
+  glances below the screen in some trials.
 - **Shelf.** In the task “find the cheapest” the cheapest product (Porridge)
   collects the most dwell time, and prices are read in order before the low
   ones are compared; in the choice task each shopper goes back and forth
@@ -70,6 +74,12 @@ Effects built into the simulated data, so that there is something to find:
 5. **Ten minutes.** What would a methods section have to say for someone
    else to arrive at the same table?
 
+## A ten-hour block in Czech
+
+[`vyuka/`](../vyuka/00%20Rozcestník.md) holds a complete lesson plan for a ten-hour block with five students who do not
+program: a teacher's schedule, printable worksheets, an answer key and the data files they use. Its numbers come from
+these examples (`vyuka/prilohy/vytvor_prilohy.py`), so re-run that script after changing `examples/generate.py`.
+
 ## From the examples to students' own data
 
 *Examples → Analyse your own recording* starts an empty pipeline with a Load
@@ -90,6 +100,9 @@ viewing patterns → Build a table for statistics
 
 The step library greys out steps that cannot work yet and says what is
 missing ("Needs fixations. Add Detect fixations by speed first.").
+
+Tables download as *CSV* (for JASP, jamovi, R) or as *CSV for Excel* (semicolons and decimal commas, which opens
+correctly by double-click in Excel with Czech and most other European settings).
 
 For handing in work, *Export results* gives one zip with the tables, the
 pipeline and a script that reproduces them; *Save* gives just the pipeline

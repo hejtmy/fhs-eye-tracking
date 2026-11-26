@@ -32,7 +32,8 @@ ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = Path(os.environ.get("GAZELAB_DATA_DIR", ROOT / "var"))
 MAX_UPLOAD = int(os.environ.get("GAZELAB_MAX_UPLOAD_MB", "300")) * 1024 * 1024
 TTL_HOURS = float(os.environ.get("GAZELAB_UPLOAD_TTL_HOURS", "168"))
-RECORDINGS = (".csv", ".tsv", ".txt", ".dat", ".asc", ".json", ".gz")
+RECORDINGS = (".csv", ".tsv", ".txt", ".dat", ".asc", ".json", ".gz", ".xlsx")
+IMAGE_MB, IMAGE_PIXELS, IMAGE_SIDE = 60, 120_000_000, 2560   # what an upload may be; stored images are shrunk to fit IMAGE_SIDE
 
 log = logging.getLogger("gazelab")
 library = Library(examples=ROOT / "examples" / "datasets", uploads=DATA_DIR / "datasets")
@@ -62,6 +63,7 @@ class TableRequest(Step):
     limit: int = Field(100, ge=1, le=500)
     participant: str = ""
     trial: str = ""
+    excel: bool = False           # downloads only: semicolons and decimal commas, as Excel expects in Czech and most European settings
 
 
 class ViewRequest(Step):
@@ -207,7 +209,9 @@ def download(request: TableRequest):
     if request.table not in bundle:
         raise PipelineError(f"There is no table “{request.table}” at this step.")
     name = safe_name(request.table.replace(":", "").replace(" ", "_")) + ".csv"
-    return Response(bundle[request.table].to_csv(index=False), media_type="text/csv", headers={"Content-Disposition": f'attachment; filename="{name}"'})
+    frame = bundle[request.table]
+    text = "\ufeff" + frame.to_csv(index=False, sep=";", decimal=",") if request.excel else frame.to_csv(index=False)
+    return Response(text.encode("utf-8"), media_type="text/csv", headers={"Content-Disposition": f'attachment; filename="{name}"'})
 
 
 RUN_PY = '''"""Re-run this analysis without the web app:  python run.py"""
@@ -304,7 +308,7 @@ async def add_files(dataset, files):
     for upload in files:
         name = safe_name(upload.filename or "recording.csv")
         if not name.lower().endswith(RECORDINGS):
-            raise HTTPException(415, f"“{name}” is not a recording this server can read. Use CSV/TSV/text, EyeLink .asc or Tobii livedata.json(.gz).")
+            raise HTTPException(415, f"“{name}” is not a recording this server can read. Use CSV/TSV/text, EyeLink .asc, Tobii livedata.json(.gz) or a WebGazer .xlsx.")
         stem, suffix = (name[:-len(".json.gz")], ".json.gz") if name.lower().endswith(".json.gz") else (Path(name).stem, Path(name).suffix)
         n = 1
         while (dataset.root / name).exists():
@@ -359,18 +363,23 @@ def remove_file(dataset_id: str, name: str):
 
 @app.post("/api/datasets/{dataset_id}/stimuli")
 async def add_stimuli(dataset_id: str, files: list[UploadFile] = File(...)):
-    """Stimulus images. An image is matched to trials by its file name (without extension)."""
+    """Stimulus images. An image is matched to trials by its file name (without extension).
+
+    Large photos are shrunk: gaze is placed by the screen size and the image's proportions, never by its own pixels.
+    """
     dataset = editable(dataset_id)
     (dataset.root / "stimuli").mkdir(exist_ok=True)
     for upload in files:
-        content = await upload.read(20 * 1024 * 1024 + 1)
+        content = await upload.read(IMAGE_MB * 1024 * 1024 + 1)
         try:
             with Image.open(io.BytesIO(content)) as image:
-                if len(content) > 20 * 1024 * 1024 or image.format not in ("PNG", "JPEG", "WEBP") or image.width * image.height > 40_000_000:
+                if len(content) > IMAGE_MB * 1024 * 1024 or image.format not in ("PNG", "JPEG", "WEBP") or image.width * image.height > IMAGE_PIXELS:
                     raise ValueError
+                image.draft("RGB", (IMAGE_SIDE, IMAGE_SIDE))   # JPEG: decode at a reduced size straight away
                 clean = image.convert("RGB")
+                clean.thumbnail((IMAGE_SIDE, IMAGE_SIDE))
         except Exception:
-            raise HTTPException(415, f"“{upload.filename}” is not a PNG, JPEG or WebP image of reasonable size.") from None
+            raise HTTPException(415, f"“{upload.filename}” is not a PNG, JPEG or WebP image of at most {IMAGE_MB} MB.") from None
         name = safe_name(Path(upload.filename or "stimulus").stem)
         clean.save(dataset.root / "stimuli" / f"{name}.png", optimize=True)
         dataset.info.setdefault("stimuli", {})[name] = f"stimuli/{name}.png"

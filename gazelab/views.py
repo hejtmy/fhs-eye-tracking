@@ -9,7 +9,7 @@ import pandas as pd
 from scipy.ndimage import gaussian_filter
 
 from .core import KEYS, runs, sample_period, trials, view, num
-from .datasets import match_stimulus, stimulus_url
+from .datasets import match_stimulus, stimulus_key, stimulus_url
 
 C = dict(x="#2563eb", y="#d97706", pupil="#0f766e", velocity="#7c3aed", before="#b6bcc6", fixation="#2563eb",
          saccade="#d97706", blink="#dc2626", removed="#f87171", filled="#38bdf8", marker="#64748b", path="#64748b")
@@ -161,11 +161,14 @@ def stage(data, trial):
                   shapes=[dict(type="rect", x0=0, y0=0, x1=width, y1=height, line=dict(color="#94a3b8", width=1), layer="below")],
                   annotations=[], hovermode="closest", legend=dict(orientation="h", y=1.02, yanchor="bottom", x=0))
     if name:
-        layout["images"] = [dict(source=stimulus_url(data.meta["dataset"], name), xref="x", yref="y", x=0, y=0, sizex=width, sizey=height,
-                                 xanchor="left", yanchor="top", sizing="stretch", layer="below", opacity=0.85)]
+        # “contain”: the image keeps its proportions and sits in the middle of the screen, as WebGazer experiments show it
+        placed = dict(x=width / 2, y=height / 2, xanchor="center", yanchor="middle", sizing="contain") if data.meta.get("stimulus_fit") == "contain" \
+            else dict(x=0, y=0, xanchor="left", yanchor="top", sizing="stretch")
+        layout["images"] = [dict(source=stimulus_url(data.meta["dataset"], name), xref="x", yref="y", sizex=width, sizey=height,
+                                 layer="below", opacity=0.85, **placed)]
     if "aois" in data and "w" in data["aois"]:
         for i, area in enumerate(data["aois"].to_dict("records")):
-            if area.get("stimulus") and area["stimulus"] != shown:
+            if area.get("stimulus") and stimulus_key(area["stimulus"]) != stimulus_key(shown):
                 continue
             colour = AREAS[list(dict.fromkeys(data["aois"]["name"])).index(area["name"]) % len(AREAS)]
             layout["shapes"].append(dict(type="circle" if area["shape"] == "ellipse" else "rect", x0=area["x"], y0=area["y"], x1=area["x"] + area["w"],
@@ -177,12 +180,19 @@ def stage(data, trial):
     return layout, shown
 
 
-@view("gaze", "Gaze on the stimulus")
+@view("gaze", "Gaze on the stimulus", compares=True)
 def gaze(data, sel, before=None):
     key, trial = pick(data, sel)
     layout, shown = stage(data, trial)
     stride = max(1, len(trial) // MAX_POINTS)
-    traces = [dict(type="scatter", mode="lines+markers", x=numbers(trial["x"].to_numpy()[::stride]), y=numbers(trial["y"].to_numpy()[::stride]), name="gaze samples",
+    traces = []
+    if before is not None and before.samples is not data.samples:  # what this step received, drawn underneath in grey
+        groups = trials(before.samples)
+        if key in groups:
+            old = before.samples.iloc[groups[key]]
+            traces.append(dict(type="scatter", mode="lines+markers", x=numbers(old["x"].to_numpy()[::stride]), y=numbers(old["y"].to_numpy()[::stride]),
+                               name="before this step", line=dict(color=C["before"], width=0.8), marker=dict(size=3, color=C["before"]), hoverinfo="skip"))
+    traces += [dict(type="scatter", mode="lines+markers", x=numbers(trial["x"].to_numpy()[::stride]), y=numbers(trial["y"].to_numpy()[::stride]), name="gaze samples",
                    line=dict(color=C["path"], width=0.8), marker=dict(size=3, color=C["path"]), opacity=0.55, hoverinfo="skip")]
     if "fixations" in data:
         fixations = own(data["fixations"], key)

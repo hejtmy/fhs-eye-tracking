@@ -74,7 +74,7 @@ watch(() => JSON.stringify([request.value, step.value?.fingerprint, step.value?.
 }, { immediate: true });
 
 const figureName = computed(() => `${spec.value?.title || "figure"} ${view.value?.title || ""} ${state.participant} ${state.trial}`.trim().replace(/\s+/g, "-").toLowerCase());
-const saveCsv = () => download("download", { graph: graph(), node: state.selected, side: side.value, table: table.value.name }, `${table.value.name}.csv`).catch((e) => (failure.value = e.message));
+const saveCsv = (excel = false) => download("download", { graph: graph(), node: state.selected, side: side.value, table: table.value.name, excel }, `${table.value.name}.csv`).catch((e) => (failure.value = e.message));
 const rows = (n) => new Intl.NumberFormat("en").format(n).replaceAll(",", " ");
 </script>
 
@@ -112,7 +112,10 @@ const rows = (n) => new Intl.NumberFormat("en").format(n).replaceAll(",", " ");
           <label v-if="view?.compares && side === 'output' && !step?.is_source" class="check" title="Draw the data as it was before this step, in grey, underneath">
             <input v-model="compare" type="checkbox" />Show input in grey
           </label>
-          <button v-if="table" class="secondary" title="The whole table, all participants and trials" @click="saveCsv"><Download :size="14" />CSV</button>
+          <template v-if="table">
+            <button class="secondary" title="The whole table, all participants and trials. For JASP, jamovi, R and Python." @click="saveCsv(false)"><Download :size="14" />CSV</button>
+            <button class="secondary" title="The same table with semicolons and decimal commas, which Excel expects with Czech and most European settings. Opens by double-click." @click="saveCsv(true)"><Download :size="14" />CSV for Excel</button>
+          </template>
           <button v-else-if="figure" class="secondary" @click="plot?.savePng()"><Download :size="14" />PNG</button>
         </div>
       </div>

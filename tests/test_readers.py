@@ -5,9 +5,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from gazelab import PipelineError
+from gazelab.datasets import match_stimulus
 from gazelab.readers import READERS, detect, read_file, suggest_mapping
 
-from conftest import EXAMPLES, chain, recording
+from conftest import EXAMPLES, chain, recording, webgazer_workbook
 
 SHELF = EXAMPLES / "datasets" / "glasses-shelf" / "shelf_P01.tsv"
 LIVEDATA = EXAMPLES / "datasets" / "glasses-raw" / "livedata.json.gz"
@@ -128,6 +130,36 @@ def test_loading_problems_are_explained(workspace):
     load[1]["source"]["dataset"] = "gone"
     assert "no longer on the server" in runner.run(chain(load))["n0"].error
     assert "Choose a dataset" in runner.run(chain(("load", {})))["n0"].error
+
+
+def test_webgazer_workbook_gives_phases_markers_and_calibration(workspace, tmp_path):
+    path = webgazer_workbook(tmp_path / "webgazer_vlastni_stimuly.xlsx")
+    assert detect(path).id == "webgazer"
+    reader, raw = read_file(path)
+    suggestion = reader.suggest(raw)
+    assert suggestion["mapping"] == dict(time="cas_ms", x="x_1920", y="y_1080", pupil="", participant="", trial="faze", condition="", stimulus="stimul")
+    assert suggestion["params"] == dict(time_unit="ms", gaze_unit="px", width_px=1920, height_px=1080, geometry="screen", stimulus_fit="contain")
+    assert raw.events["label"].tolist() == ["cross1", "s1", "cross2", "s2"] and raw.events["time"].tolist() == [0, 300, 1300, 1600]   # where each phase began
+    assert any("2 attempt(s); the one used was off by 88 px" in note for note in raw.notes)   # the calibration marked “ano”, not the last row read
+
+    runner, load = workspace(path.read_bytes(), name="webgazer.xlsx", stimulus_fit="contain")
+    data = runner.run(chain(load))["n0"].bundle
+    assert data.samples.groupby("trial", sort=False)["stimulus"].first().to_dict() == {
+        "cross1": "fixační kříž", "s1": "Přednáška – Lukavský (12x6 in, na šířku).png", "cross2": "fixační kříž", "s2": "3333.jpg"}
+    assert data.meta["stimulus_fit"] == "contain" and len(data["events"]) == 4
+
+    other = tmp_path / "other.xlsx"
+    pd.DataFrame(dict(time=[1, 2])).to_excel(other, index=False)
+    with pytest.raises(PipelineError, match="not one saved by the WebGazer experiment"):
+        read_file(other)
+
+
+def test_stimulus_labels_find_their_uploaded_images():
+    images = {"3333": "", "Přednáška _ Lukavský 15.12.2026 (12x6 in_ na šířku)": "", "easy_1": ""}   # names as uploads store them
+    assert match_stimulus(images, "3333.jpg") == "3333"
+    assert match_stimulus(images, "Přednáška – Lukavský 15.12.2026 (12x6 in, na šířku).png") == "Přednáška _ Lukavský 15.12.2026 (12x6 in_ na šířku)"
+    assert match_stimulus(images, "EASY_1") == "easy_1" and match_stimulus(images, "fixační kříž") is None
+    assert match_stimulus({"scene": ""}, "anything") == "scene"   # a single image serves every trial
 
 
 def test_every_reader_describes_itself():

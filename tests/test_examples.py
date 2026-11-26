@@ -76,3 +76,16 @@ def test_tobii_fixations_from_the_file_agree_with_our_own(ran):
     assert theirs.ok, theirs.error
     ours = ran["04-glasses-shelf"]["s4"].bundle["fixations"]
     assert abs(len(theirs.bundle["fixations"]) - len(ours)) < 0.25 * len(ours)
+
+
+def test_the_angry_face_is_looked_at_first_and_avoided_later(ran):
+    whole, late = (ran["06-four-faces"][step].bundle["summary"] for step in ("s8", "b15"))
+    first = whole.pivot(index="participant", columns="aoi", values="first_fixation_ms")
+    assert len(first) == 10 and (first["Angry"] < first["Happy"]).sum() >= 9
+    for table, most in ((whole, 7), (late, 9)):   # the preference for the happy face is clearest once the first look is over
+        dwell = table.pivot(index="participant", columns="aoi", values="dwell_pct")
+        assert (dwell["Happy"] > dwell["Angry"]).sum() >= most
+    assert late.groupby("aoi")["dwell_pct"].mean()["Angry"] < 0.7 * whole.groupby("aoi")["dwell_pct"].mean()["Angry"]
+    samples = ran["06-four-faces"]["s1"].bundle["samples"]
+    below = samples[samples["y"] > 1080 + 50]
+    assert set(below["participant"]) == {"P07"} and len(below) > 50

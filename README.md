@@ -59,7 +59,7 @@ those marked ● are calculated by pymovements):
 | --- | --- |
 | Load | Load recording |
 | Prepare | Cut trials from markers · Add trial information · Trim trials in time |
-| Clean | Remove off-screen gaze ● · Detect and remove blinks ● · Fill short gaps · Reduce noise ● · Baseline-correct pupil |
+| Clean | Correct drift · Remove off-screen gaze ● · Detect and remove blinks ● · Fill short gaps · Reduce noise ● · Baseline-correct pupil |
 | Detect events | Fixations by speed (I-VT) ● · Fixations by spread (I-DT) ● · Saccades (Engbert & Kliegl) ● · Use the tracker's own fixations |
 | Areas of interest | Draw areas · Areas from file columns · Measure attention per area · Count transitions · Find viewing patterns |
 | Summarise | Summarise each trial · Build a table for statistics (long or wide) |
@@ -69,19 +69,24 @@ those marked ● are calculated by pymovements):
 - Tobii Pro Lab data exports (TSV) of Tobii Pro Glasses 2/3 and screen trackers
 - Tobii Pro Glasses 2 raw recordings (`livedata.json.gz` from the SD card)
 - EyeLink ASC files (parsed by pymovements)
+- WebGazer experiments: the `.xlsx` workbook the experiment page saves, with the images that were shown
 - any CSV/TSV of gaze samples, with a column-mapping dialog
 
 Details, required columns and caveats: [docs/data-formats.md](docs/data-formats.md).
 
-**Results you can take away.** Any table at any step downloads as CSV, any
-figure as PNG. *Export results* produces a zip with every step's tables, the
+**Results you can take away.** Any table at any step downloads as CSV (also
+in a variant with semicolons and decimal commas for Excel), any figure as PNG. *Export results* produces a zip with every step's tables, the
 pipeline, the data and a script that reproduces everything without the app
 (`python run.py`).
 
-**Five worked examples** on three simulated datasets, each with a short list
+**Six worked examples** on four simulated datasets, each with a short list
 of things to try: from samples to fixations, AOI measures and a paired
 comparison, pupil cleaning, a Tobii Glasses 2 shelf study (Pro Lab export),
-and a raw Glasses 2 recording. See [docs/teaching.md](docs/teaching.md).
+a raw Glasses 2 recording, and free viewing of four faces (first look against
+lasting look). See [docs/teaching.md](docs/teaching.md).
+
+**A ten-hour teaching block in Czech** with a lesson plan, printable
+worksheets and an answer key is in [`vyuka/`](vyuka/00%20Rozcestník.md).
 
 ## The example data are simulated
 
@@ -106,6 +111,7 @@ gazelab/          the analysis engine; plain Python, no web code
 server/app.py     the HTTP API around the engine
 frontend/         the web app (Vue 3, Vite)
 examples/         simulated datasets, example pipelines, their generator
+vyuka/            Czech lesson plan, worksheets and their data (an Obsidian folder)
 plugins/          drop-in steps loaded at start-up
 tests/            pytest suite
 docs/             deployment, data formats, extending, teaching, review of v1

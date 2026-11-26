@@ -52,12 +52,47 @@ watch(() => source.value.dataset, (id) => {
 const choose = (id) => (id ? inspect(id, "auto", {}, true) : emit("change", { source: { ...source.value, dataset: "" } }));
 const setSource = (changes) => emit("change", { source: { ...source.value, ...changes } });
 
-async function receive(files) {
-  if (!files.length) return;
-  const created = await attempt("Uploading…", () => upload("datasets", files));
+// Images dropped together with recordings (e.g. a WebGazer workbook and its stimuli) become stimulus images.
+const isImage = (file) => /\.(png|jpe?g|webp)$/i.test(file.name);
+const RECORDINGS = ".csv,.tsv,.txt,.dat,.asc,.json,.gz,.xlsx";
+const isRecording = (file) => RECORDINGS.split(",").some((end) => file.name.toLowerCase().endsWith(end));
+
+// What was dropped, with folders opened (a WebGazer folder holds the workbook and its images). Hidden files such as .DS_Store are left out.
+async function droppedFiles(transfer) {
+  const entries = [...transfer.items].map((item) => item.webkitGetAsEntry?.()).filter(Boolean); // read now: the drop data is gone after the first await
+  if (!entries.length) return [...transfer.files];
+  const files = [];
+  async function walk(entry) {
+    if (entry.name.startsWith(".")) return;
+    if (entry.isFile) return files.push(await new Promise((done, fail) => entry.file(done, fail)));
+    const reader = entry.createReader();
+    for (let batch; (batch = await new Promise((done, fail) => reader.readEntries(done, fail))).length; ) {
+      for (const inner of batch) await walk(inner);
+    }
+  }
+  for (const entry of entries) await walk(entry);
+  return files;
+}
+async function dropped(event) {
+  dragging.value = false;
+  receive(await droppedFiles(event.dataTransfer));
+}
+
+async function receive(all) {
+  if (!all.length) return;
+  const images = all.filter(isImage), recordings = all.filter(isRecording);
+  const skipped = all.filter((f) => !isImage(f) && !isRecording(f)).map((f) => f.name);
+  if (!recordings.length) {
+    return (problem.value = images.length ? "These are only images. Upload the recording first, then add the images to it."
+      : `None of these is a recording this app can read (${skipped.join(", ")}). Use CSV/TSV/text, EyeLink .asc, Tobii livedata.json(.gz) or a WebGazer .xlsx.`);
+  }
+  const created = await attempt("Uploading…", () => upload("datasets", recordings));
   if (created) {
     rememberUpload(created);
+    const pictured = images.length && (await attempt("Uploading images…", () => upload(`datasets/${created.id}/stimuli`, images)));
+    if (pictured) rememberUpload(pictured);
     await inspect(created.id, "auto", {}, true);
+    if (skipped.length && !problem.value) problem.value = `Left out, as neither a recording nor an image: ${skipped.join(", ")}.`;
   }
 }
 async function change(label, work) {
@@ -69,7 +104,11 @@ async function change(label, work) {
   }
 }
 const id = () => source.value.dataset;
-const addFiles = (files) => files.length && change("Uploading…", () => upload(`datasets/${id()}/files`, files));
+const addFiles = (files) => files.length && change("Uploading…", async () => {
+  const images = files.filter(isImage), recordings = files.filter((f) => !isImage(f));
+  const added = recordings.length ? await upload(`datasets/${id()}/files`, recordings) : null;
+  return images.length ? upload(`datasets/${id()}/stimuli`, images) : added;
+});
 const addImages = (files) => files.length && change("Uploading…", () => upload(`datasets/${id()}/stimuli`, files));
 const rename = (file, label) => label.trim() && label !== file.label && change("Renaming…", () => patch(`datasets/${id()}/files/${encodeURIComponent(file.name)}`, { label }));
 const removeFile = (file) => change("Removing…", () => del(`datasets/${id()}/files/${encodeURIComponent(file.name)}`));
@@ -106,12 +145,12 @@ const picked = (event, handler) => {
     </div>
     <button
       class="dropzone" :class="{ over: dragging }" @click="filePicker.click()" @dragover.prevent="dragging = true" @dragleave="dragging = false"
-      @drop.prevent="(dragging = false), receive([...$event.dataTransfer.files])"
+      @drop.prevent="dropped"
     >
       <Upload :size="18" />
-      <span><strong>Upload your own files</strong>Drop them here or click. One file per participant; up to {{ state.catalog.limits.upload_mb }} MB.</span>
+      <span><strong>Upload your own files</strong>Drop them here or click. One file per participant, plus the stimulus images if you have them (a whole folder works too); up to {{ state.catalog.limits.upload_mb }} MB.</span>
     </button>
-    <input ref="filePicker" type="file" multiple hidden accept=".csv,.tsv,.txt,.dat,.asc,.json,.gz" @change="picked($event, receive)" />
+    <input ref="filePicker" type="file" multiple hidden :accept="`${RECORDINGS},image/png,image/jpeg,image/webp`" @change="picked($event, receive)" />
     <p v-if="busy" class="source-status">{{ busy }}</p>
     <p v-if="problem" class="alert" role="alert">{{ problem }}</p>
 
@@ -133,7 +172,7 @@ const picked = (event, handler) => {
         <button class="link" @click="morePicker.click()"><FilePlus2 :size="14" />Add recordings</button>
         <button class="link" title="An image is shown behind the gaze of trials whose stimulus has the same name; a single image is used for all trials" @click="imagePicker.click()"><Image :size="14" />Add stimulus images</button>
         <button class="link danger" @click="removeDataset"><Trash2 :size="14" />Delete upload</button>
-        <input ref="morePicker" type="file" multiple hidden accept=".csv,.tsv,.txt,.dat,.asc,.json,.gz" @change="picked($event, addFiles)" />
+        <input ref="morePicker" type="file" multiple hidden :accept="`${RECORDINGS},image/png,image/jpeg,image/webp`" @change="picked($event, addFiles)" />
         <input ref="imagePicker" type="file" multiple hidden accept="image/png,image/jpeg,image/webp" @change="picked($event, addImages)" />
       </div>
       <p v-if="!dataset.example" class="source-about">Uploads stay on this server for {{ Math.round(state.catalog.limits.keep_hours / 24) }} days after their last use and are reachable only through this pipeline.</p>
