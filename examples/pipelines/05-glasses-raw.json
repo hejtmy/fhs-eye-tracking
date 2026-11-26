@@ -1,0 +1,84 @@
+{
+  "name": "Glasses: straight from the SD card",
+  "description": "Read livedata.json.gz without any Tobii software and get from raw packets to fixations per task.",
+  "dataset": "glasses-raw",
+  "tasks": [
+    "Select “Load recording” and open “File as read”. Each row was assembled from several packets. Which columns come from which packet type?",
+    "The gaze view has no picture: gaze is in scene-video coordinates and the video is not loaded. What can and cannot be concluded from positions?",
+    "The I-VT threshold is 100 °/s here instead of 30. Lower it to 30. What happens, and why is head movement the reason?",
+    "Compare fixation_mean_ms between the two tasks in the trial summary."
+  ],
+  "graph": {
+    "nodes": [
+      {
+        "id": "s1",
+        "kind": "load",
+        "params": {
+          "source": {
+            "dataset": "glasses-raw"
+          },
+          "width_px": 1920,
+          "height_px": 1080,
+          "geometry": "camera",
+          "fov_deg": 82
+        }
+      },
+      {
+        "id": "s2",
+        "kind": "trials_from_events",
+        "params": {
+          "start": "*_start",
+          "end": "*_end"
+        }
+      },
+      {
+        "id": "s3",
+        "kind": "blinks",
+        "params": {
+          "margin_ms": 40
+        }
+      },
+      {
+        "id": "s4",
+        "kind": "interpolate",
+        "params": {
+          "max_gap_ms": 75
+        }
+      },
+      {
+        "id": "s5",
+        "kind": "fixations_ivt",
+        "params": {
+          "threshold": 100
+        }
+      },
+      {
+        "id": "s6",
+        "kind": "trial_summary",
+        "params": {}
+      }
+    ],
+    "edges": [
+      {
+        "source": "s1",
+        "target": "s2"
+      },
+      {
+        "source": "s2",
+        "target": "s3"
+      },
+      {
+        "source": "s3",
+        "target": "s4"
+      },
+      {
+        "source": "s4",
+        "target": "s5"
+      },
+      {
+        "source": "s5",
+        "target": "s6"
+      }
+    ]
+  }
+}

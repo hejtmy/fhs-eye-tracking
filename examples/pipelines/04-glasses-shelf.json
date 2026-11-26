@@ -1,0 +1,157 @@
+{
+  "name": "Glasses: which product gets attention?",
+  "description": "A Tobii Pro Lab export of Glasses 2: cut tasks from markers, use mapped gaze and AOI hits, and find comparison patterns.",
+  "dataset": "glasses-shelf",
+  "tasks": [
+    "Select “Load recording” and open “File as read”. The export mixed eye, gyroscope and marker rows. Under “What this step did”, see where each kind went.",
+    "Gaze here is “mapped gaze” on the shelf snapshot, not gaze in the moving scene video. Why does that matter for areas of interest, and why are degrees only approximate here?",
+    "Select “Cut trials from markers”. The three tasks become trials and conditions. What happened to the samples between tasks?",
+    "Select “Find viewing patterns”. Which pattern dominates in the choice task? What does it say about how people decide?",
+    "Add “Use the tracker's own fixations” as a new branch after “Fill short gaps” and compare it with I-VT."
+  ],
+  "graph": {
+    "nodes": [
+      {
+        "id": "s1",
+        "kind": "load",
+        "params": {
+          "source": {
+            "dataset": "glasses-shelf",
+            "reader": "tobii_prolab",
+            "mapping": {
+              "time": "Recording timestamp [ms]",
+              "x": "Mapped gaze data X [Shelf]",
+              "y": "Mapped gaze data Y [Shelf]",
+              "pupil": "Pupil diameter mean",
+              "participant": "Participant name"
+            },
+            "extra": [
+              "AOI hit [Shelf - Oat flakes]",
+              "AOI hit [Shelf - Muesli]",
+              "AOI hit [Shelf - Cornflakes]",
+              "AOI hit [Shelf - Granola]",
+              "AOI hit [Shelf - Porridge]",
+              "AOI hit [Shelf - Bran]",
+              "Eye movement type",
+              "Eye movement type index"
+            ]
+          },
+          "width_px": 1920,
+          "height_px": 1080,
+          "geometry": "camera",
+          "fov_deg": 82
+        }
+      },
+      {
+        "id": "s2",
+        "kind": "trials_from_events",
+        "params": {
+          "start": "*_start",
+          "end": "*_end"
+        }
+      },
+      {
+        "id": "s3",
+        "kind": "interpolate",
+        "params": {
+          "max_gap_ms": 75,
+          "channels": "gaze"
+        }
+      },
+      {
+        "id": "s4",
+        "kind": "fixations_ivt",
+        "params": {
+          "threshold": 50,
+          "min_duration_ms": 60
+        }
+      },
+      {
+        "id": "s5",
+        "kind": "aoi_columns",
+        "params": {}
+      },
+      {
+        "id": "s6",
+        "kind": "aoi_metrics",
+        "params": {}
+      },
+      {
+        "id": "s7",
+        "kind": "aggregate",
+        "params": {
+          "table": "aoi_metrics",
+          "by": [
+            "condition",
+            "aoi"
+          ],
+          "stat": "mean",
+          "layout": "long"
+        }
+      },
+      {
+        "id": "b11",
+        "kind": "aoi_patterns",
+        "params": {
+          "length": 3
+        }
+      },
+      {
+        "id": "b12",
+        "kind": "aggregate",
+        "params": {
+          "table": "patterns",
+          "by": [
+            "condition",
+            "pattern"
+          ],
+          "stat": "sum",
+          "layout": "long"
+        }
+      },
+      {
+        "id": "b21",
+        "kind": "aoi_transitions",
+        "params": {}
+      }
+    ],
+    "edges": [
+      {
+        "source": "s1",
+        "target": "s2"
+      },
+      {
+        "source": "s2",
+        "target": "s3"
+      },
+      {
+        "source": "s3",
+        "target": "s4"
+      },
+      {
+        "source": "s4",
+        "target": "s5"
+      },
+      {
+        "source": "s5",
+        "target": "s6"
+      },
+      {
+        "source": "s6",
+        "target": "s7"
+      },
+      {
+        "source": "s5",
+        "target": "b11"
+      },
+      {
+        "source": "b11",
+        "target": "b12"
+      },
+      {
+        "source": "s5",
+        "target": "b21"
+      }
+    ]
+  }
+}

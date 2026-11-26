@@ -46,3 +46,15 @@ vignettes/*.pdf
 **/*.quarto_ipynb
 
 _site/
+
+# Gaze Lab
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+frontend/node_modules/
+frontend/dist/
+.playwright-mcp/
+/var/
+.env
+*.log

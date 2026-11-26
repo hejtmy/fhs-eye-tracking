@@ -1,0 +1,19 @@
+{
+  "name": "Glasses, raw from the SD card (livedata.json.gz)",
+  "provider": "Tobii Pro Glasses 2, raw recording",
+  "synthetic": true,
+  "description": "One simulated Glasses 2 recording at 100 samples per second in the raw format the recording unit writes to its SD card: one JSON packet per line for gaze position, gaze direction, pupil diameter, gyroscope and accelerometer, plus two marked tasks. Gaze is in scene-video coordinates, which move with the head; there is no stimulus image.",
+  "files": [
+    {
+      "name": "livedata.json.gz",
+      "label": "P01"
+    }
+  ],
+  "stimuli": {},
+  "defaults": {
+    "width_px": 1920,
+    "height_px": 1080,
+    "geometry": "camera",
+    "fov_deg": 82
+  }
+}

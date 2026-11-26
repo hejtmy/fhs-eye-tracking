@@ -1,0 +1,27 @@
+{
+  "name": "Visual search on a screen",
+  "provider": "Generic CSV (any screen-based tracker)",
+  "synthetic": true,
+  "description": "8 simulated participants look for an orange disc among distractors, 12 trials each. In easy trials the target pops out; in hard trials it shares a feature with every distractor. 120 samples per second, 1920 \u00d7 1080 screen (53 cm wide) at 60 cm. Participant P06 has noisy data. The true fixations are in truth/fixations.csv.",
+  "files": [
+    {
+      "name": "visual_search.csv",
+      "label": "visual_search"
+    }
+  ],
+  "stimuli": {
+    "easy_1": "stimuli/easy_1.png",
+    "easy_2": "stimuli/easy_2.png",
+    "easy_3": "stimuli/easy_3.png",
+    "hard_1": "stimuli/hard_1.png",
+    "hard_2": "stimuli/hard_2.png",
+    "hard_3": "stimuli/hard_3.png"
+  },
+  "defaults": {
+    "width_px": 1920,
+    "height_px": 1080,
+    "geometry": "screen",
+    "screen_width_cm": 53,
+    "distance_cm": 60
+  }
+}

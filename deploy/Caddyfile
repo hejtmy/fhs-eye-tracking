@@ -1,0 +1,11 @@
+# Caddy obtains and renews the HTTPS certificate for the domain by itself.
+{$GAZELAB_DOMAIN} {
+	encode zstd gzip
+	request_body {
+		max_size {$GAZELAB_MAX_UPLOAD_MB}MB
+	}
+	basic_auth {
+		{$GAZELAB_USER} {$GAZELAB_PASSWORD_HASH}
+	}
+	reverse_proxy gazelab:8000
+}

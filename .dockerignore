@@ -1,0 +1,16 @@
+.git
+.venv
+.env
+var
+legacy
+tests
+docs
+data
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+.playwright-mcp
+frontend/dist
+*.md
+!plugins/README.md
+.DS_Store

@@ -1,0 +1,92 @@
+{
+  "name": "Does effort show in the pupil?",
+  "description": "Clean a pupil trace step by step and compare easy with hard trials.",
+  "dataset": "visual-search",
+  "tasks": [
+    "Select “Detect and remove blinks” and switch on “Show input in grey”. How far around a blink is the pupil distorted?",
+    "Select “Fill short gaps”. The limit is 400 ms here, far more than for gaze. Why is that acceptable for the pupil but not for gaze position?",
+    "Select “Baseline-correct pupil”. Move the baseline to 400–600 ms. What happens to the difference between conditions?",
+    "In the final table, compare pupil_mean for easy and hard. Then ask: hard trials also last longer. Is this a fair comparison?"
+  ],
+  "graph": {
+    "nodes": [
+      {
+        "id": "s1",
+        "kind": "load",
+        "params": {
+          "source": {
+            "dataset": "visual-search"
+          },
+          "width_px": 1920,
+          "height_px": 1080,
+          "geometry": "screen",
+          "screen_width_cm": 53,
+          "distance_cm": 60
+        }
+      },
+      {
+        "id": "s2",
+        "kind": "blinks",
+        "params": {
+          "margin_ms": 80
+        }
+      },
+      {
+        "id": "s3",
+        "kind": "interpolate",
+        "params": {
+          "max_gap_ms": 400,
+          "channels": "pupil"
+        }
+      },
+      {
+        "id": "s4",
+        "kind": "baseline",
+        "params": {
+          "start_ms": 0,
+          "end_ms": 200
+        }
+      },
+      {
+        "id": "s5",
+        "kind": "trial_summary",
+        "params": {}
+      },
+      {
+        "id": "s6",
+        "kind": "aggregate",
+        "params": {
+          "table": "trial_summary",
+          "by": [
+            "participant",
+            "condition"
+          ],
+          "stat": "mean",
+          "layout": "wide"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "source": "s1",
+        "target": "s2"
+      },
+      {
+        "source": "s2",
+        "target": "s3"
+      },
+      {
+        "source": "s3",
+        "target": "s4"
+      },
+      {
+        "source": "s4",
+        "target": "s5"
+      },
+      {
+        "source": "s5",
+        "target": "s6"
+      }
+    ]
+  }
+}

@@ -1,0 +1,26 @@
+# Gaze Lab on one machine:  docker compose up -d --build   →   http://localhost:8000
+# Settings come from a .env file next to this one (see .env.example). Guide: docs/deployment.md
+services:
+  gazelab:
+    build: .
+    image: gazelab:2
+    restart: unless-stopped
+    ports:
+      - "${GAZELAB_BIND:-127.0.0.1}:${GAZELAB_PORT:-8000}:8000"
+    environment:
+      GAZELAB_MAX_UPLOAD_MB: ${GAZELAB_MAX_UPLOAD_MB:-300}
+      GAZELAB_UPLOAD_TTL_HOURS: ${GAZELAB_UPLOAD_TTL_HOURS:-168}
+      GAZELAB_MAX_ROWS: ${GAZELAB_MAX_ROWS:-3000000}
+      GAZELAB_CACHE_STEPS: ${GAZELAB_CACHE_STEPS:-64}
+      WEB_CONCURRENCY: ${GAZELAB_WORKERS:-1}
+    volumes:
+      - gazelab-data:/data            # uploaded recordings
+      - ./plugins:/app/plugins:ro     # your own steps; restart after changing them
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  gazelab-data:

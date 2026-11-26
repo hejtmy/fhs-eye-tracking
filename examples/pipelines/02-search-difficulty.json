@@ -1,0 +1,167 @@
+{
+  "name": "Is a hard search slower? (AOI measures)",
+  "description": "Draw an area around the target, measure time to first fixation, and build the table for a paired t-test.",
+  "dataset": "visual-search",
+  "tasks": [
+    "Select “Draw areas of interest” and open the editor. Each stimulus has its own Target area. Why not one area for all?",
+    "Select “Measure attention per area”. Which measure captures how quickly the target was found?",
+    "In the last step, switch the layout to Wide. What is one row now? Download the CSV.",
+    "Open the CSV in JASP or jamovi and run a paired t-test on first_fixation_ms for Target, easy against hard.",
+    "Go back and enlarge every Target area by 40 px. Does the conclusion change?"
+  ],
+  "graph": {
+    "nodes": [
+      {
+        "id": "s1",
+        "kind": "load",
+        "params": {
+          "source": {
+            "dataset": "visual-search"
+          },
+          "width_px": 1920,
+          "height_px": 1080,
+          "geometry": "screen",
+          "screen_width_cm": 53,
+          "distance_cm": 60
+        }
+      },
+      {
+        "id": "s2",
+        "kind": "blinks",
+        "params": {
+          "margin_ms": 50
+        }
+      },
+      {
+        "id": "s3",
+        "kind": "interpolate",
+        "params": {
+          "max_gap_ms": 75
+        }
+      },
+      {
+        "id": "s4",
+        "kind": "fixations_ivt",
+        "params": {
+          "threshold": 30
+        }
+      },
+      {
+        "id": "s5",
+        "kind": "aoi_draw",
+        "params": {
+          "aois": [
+            {
+              "name": "Target",
+              "shape": "ellipse",
+              "x": 1390,
+              "y": 592,
+              "w": 170,
+              "h": 170,
+              "stimulus": "easy_1"
+            },
+            {
+              "name": "Target",
+              "shape": "ellipse",
+              "x": 74,
+              "y": 330,
+              "w": 170,
+              "h": 170,
+              "stimulus": "easy_2"
+            },
+            {
+              "name": "Target",
+              "shape": "ellipse",
+              "x": 347,
+              "y": 104,
+              "w": 170,
+              "h": 170,
+              "stimulus": "easy_3"
+            },
+            {
+              "name": "Target",
+              "shape": "ellipse",
+              "x": 1725,
+              "y": 875,
+              "w": 170,
+              "h": 170,
+              "stimulus": "hard_1"
+            },
+            {
+              "name": "Target",
+              "shape": "ellipse",
+              "x": 704,
+              "y": 822,
+              "w": 170,
+              "h": 170,
+              "stimulus": "hard_2"
+            },
+            {
+              "name": "Target",
+              "shape": "ellipse",
+              "x": 722,
+              "y": 832,
+              "w": 170,
+              "h": 170,
+              "stimulus": "hard_3"
+            },
+            {
+              "name": "Centre",
+              "shape": "rect",
+              "x": 885,
+              "y": 465,
+              "w": 150,
+              "h": 150,
+              "stimulus": ""
+            }
+          ]
+        }
+      },
+      {
+        "id": "s6",
+        "kind": "aoi_metrics",
+        "params": {}
+      },
+      {
+        "id": "s7",
+        "kind": "aggregate",
+        "params": {
+          "table": "aoi_metrics",
+          "by": [
+            "participant",
+            "condition",
+            "aoi"
+          ],
+          "stat": "mean",
+          "layout": "long"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "source": "s1",
+        "target": "s2"
+      },
+      {
+        "source": "s2",
+        "target": "s3"
+      },
+      {
+        "source": "s3",
+        "target": "s4"
+      },
+      {
+        "source": "s4",
+        "target": "s5"
+      },
+      {
+        "source": "s5",
+        "target": "s6"
+      },
+      {
+        "source": "s6",
+        "target": "s7"
+      }
+    ]
+  }
+}

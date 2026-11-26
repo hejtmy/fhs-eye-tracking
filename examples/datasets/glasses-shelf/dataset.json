@@ -1,0 +1,45 @@
+{
+  "name": "Glasses in front of a shelf (Tobii Pro Lab export)",
+  "provider": "Tobii Pro Glasses 2 via Tobii Pro Lab data export",
+  "synthetic": true,
+  "description": "4 simulated shoppers wear Tobii Pro Glasses 2 (50 samples per second) in front of a cereal shelf and do three marked tasks: look around freely, find the cheapest product, choose one to buy. The files are laid out like a Tobii Pro Lab data export with Czech number format (decimal commas): eye-tracker, gyroscope and accelerometer rows interleaved, markers in the Event column, gaze mapped onto the snapshot “Shelf” and one “AOI hit” column per product.",
+  "files": [
+    {
+      "name": "shelf_P01.tsv",
+      "label": "P01"
+    },
+    {
+      "name": "shelf_P02.tsv",
+      "label": "P02"
+    },
+    {
+      "name": "shelf_P03.tsv",
+      "label": "P03"
+    },
+    {
+      "name": "shelf_P04.tsv",
+      "label": "P04"
+    }
+  ],
+  "stimuli": {
+    "Shelf": "stimuli/Shelf.png"
+  },
+  "defaults": {
+    "width_px": 1920,
+    "height_px": 1080,
+    "geometry": "camera",
+    "fov_deg": 82,
+    "source": {
+      "mapping": {
+        "time": "Recording timestamp [ms]",
+        "x": "Mapped gaze data X [Shelf]",
+        "y": "Mapped gaze data Y [Shelf]",
+        "pupil": "Pupil diameter mean",
+        "participant": "Participant name",
+        "trial": "",
+        "condition": "",
+        "stimulus": ""
+      }
+    }
+  }
+}

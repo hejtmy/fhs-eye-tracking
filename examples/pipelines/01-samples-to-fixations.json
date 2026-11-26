@@ -1,0 +1,88 @@
+{
+  "name": "From samples to fixations",
+  "description": "What the tracker records, what a blink does to it, and how two classic algorithms turn samples into fixations and saccades.",
+  "dataset": "visual-search",
+  "tasks": [
+    "Select “Load recording”. Compare “File as read” with “Output” (standard columns). What is one row?",
+    "Select “Detect and remove blinks”. In the signal view, zoom into a red bar. What happens to the pupil just before the gap?",
+    "Select the I-VT step. Change the speed threshold from 30 to 10 and to 100 °/s. Watch the fixation count on the card.",
+    "Two branches detect fixations in different ways. Compare their counts and the “Fixation durations” view. Why do they differ?",
+    "Select “Detect saccades” and open the Saccades table. Sort it by amplitude_deg. Does peak_velocity rise with it?",
+    "Open “Do this step in your own Python script” on any detection step. Which lines would you change for a different tracker?",
+    "Participant P06 has poor data. Choose P06 in the data panel. Which steps cope well, and which do not?"
+  ],
+  "graph": {
+    "nodes": [
+      {
+        "id": "s1",
+        "kind": "load",
+        "params": {
+          "source": {
+            "dataset": "visual-search"
+          },
+          "width_px": 1920,
+          "height_px": 1080,
+          "geometry": "screen",
+          "screen_width_cm": 53,
+          "distance_cm": 60
+        }
+      },
+      {
+        "id": "s2",
+        "kind": "blinks",
+        "params": {
+          "margin_ms": 50
+        }
+      },
+      {
+        "id": "s3",
+        "kind": "interpolate",
+        "params": {
+          "max_gap_ms": 75
+        }
+      },
+      {
+        "id": "s4",
+        "kind": "fixations_ivt",
+        "params": {
+          "threshold": 30
+        }
+      },
+      {
+        "id": "s5",
+        "kind": "saccades",
+        "params": {}
+      },
+      {
+        "id": "b11",
+        "kind": "fixations_idt",
+        "params": {
+          "dispersion": 1.0,
+          "min_duration_ms": 100
+        }
+      }
+    ],
+    "edges": [
+      {
+        "source": "s1",
+        "target": "s2"
+      },
+      {
+        "source": "s2",
+        "target": "s3"
+      },
+      {
+        "source": "s3",
+        "target": "s4"
+      },
+      {
+        "source": "s4",
+        "target": "s5"
+      },
+      {
+        "source": "s3",
+        "target": "b11"
+      }
+    ]
+  }
+}

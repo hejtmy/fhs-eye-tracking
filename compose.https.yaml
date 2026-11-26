@@ -1,0 +1,28 @@
+# Adds HTTPS and one shared password in front of Gaze Lab, for a server reachable from the internet:
+#   docker compose -f compose.yaml -f compose.https.yaml up -d --build
+# Needs GAZELAB_DOMAIN, GAZELAB_USER and GAZELAB_PASSWORD_HASH in .env (see .env.example).
+services:
+  gazelab:
+    ports: !reset []                  # reachable only through the proxy below
+
+  proxy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      GAZELAB_DOMAIN: ${GAZELAB_DOMAIN:?set GAZELAB_DOMAIN in .env}
+      GAZELAB_USER: ${GAZELAB_USER:?set GAZELAB_USER in .env}
+      GAZELAB_PASSWORD_HASH: ${GAZELAB_PASSWORD_HASH:?set GAZELAB_PASSWORD_HASH in .env}
+      GAZELAB_MAX_UPLOAD_MB: ${GAZELAB_MAX_UPLOAD_MB:-300}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - proxy-data:/data              # certificates
+      - proxy-config:/config
+    depends_on:
+      - gazelab
+
+volumes:
+  proxy-data:
+  proxy-config:
