@@ -72,8 +72,9 @@ class TobiiProLab(Reader):
         if chosen:
             frame["Pupil diameter mean"] = frame[chosen].mean(axis=1)
             notes.append("Pupil size: " + ("mean of the eyes that were tracked." if len(chosen) > 1 else f"{o['pupil']} eye."))
-        for key, name in (("width_px", "recording resolution width"), ("height_px", "recording resolution height")):
-            column = find(frame.columns, name)
+        for key, names in (("width_px", ("recording resolution width", "recording media width")),
+                           ("height_px", ("recording resolution height", "recording media height"))):
+            column = find(frame.columns, *names)
             if column is not None and frame[column].notna().any():
                 hints[key] = int(float(frame[column].dropna().iloc[0]))
         return Raw(frame, events, notes, hints)
