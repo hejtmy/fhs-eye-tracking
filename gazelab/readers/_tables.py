@@ -8,6 +8,8 @@ import pandas as pd
 from . import head, open_text
 
 SEPARATORS = {"tab": "\t", "comma": ",", "semicolon": ";", "space": r"\s+"}
+COMMA_NUMBER = re.compile(r"[-+]?\d+,\d+(?:[eE][-+]?\d+)?")
+DOT_NUMBER = re.compile(r"[-+]?\d*\.\d+(?:[eE][-+]?\d+)?")
 
 
 def guess_format(path, separator="auto", decimal="auto"):
@@ -22,9 +24,11 @@ def guess_format(path, separator="auto", decimal="auto"):
         counts = {name: header.count(char) for name, char in (("tab", "\t"), ("semicolon", ";"), ("comma", ","))}
         separator = max(counts, key=counts.get) if max(counts.values()) else "space"
     if decimal == "auto":
-        data = "\n".join(body[1:])
-        commas = len(re.findall(r"\d,\d", data)) if separator != "comma" else 0
-        decimal = "," if commas and commas > len(re.findall(r"\d\.\d", data)) else "."
+        # Judge whole cells only: dates (26.11.2026) and times (11:29:59.691) contain dots but are not decimals.
+        split = re.compile(SEPARATORS[separator])
+        cells = [cell.strip() for line in body[1:] for cell in split.split(line)]
+        commas = sum(bool(COMMA_NUMBER.fullmatch(c)) for c in cells) if separator != "comma" else 0
+        decimal = "," if commas and commas > sum(bool(DOT_NUMBER.fullmatch(c)) for c in cells) else "."
     return separator, decimal, skip
 
 

@@ -81,5 +81,5 @@ class TobiiProLab(Reader):
     def suggest(self, raw):
         columns = list(raw.frame.columns)
         mapping = suggest_mapping(columns)
-        keep = [c for c in columns if simple(c).startswith(("aoihit", "eyemovementtype", "mappedgazedata", "gazeeventduration"))]
+        keep = [c for c in columns if simple(c).startswith(("aoihit", "eyemovementtype", "mappedgazedata", "mappedgazepoint", "mappedfixation", "gazeeventduration"))]
         return dict(mapping=mapping, extra=keep, params=dict(raw.hints))

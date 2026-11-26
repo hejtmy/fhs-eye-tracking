@@ -42,6 +42,19 @@ def test_tobii_pro_lab_export_separates_sensors_markers_and_decimal_commas():
     assert left_only["Pupil diameter mean"].equals(left_only["Pupil diameter left [mm]"])
 
 
+def test_czech_pro_lab_export_with_dotted_dates_is_read_with_decimal_commas(tmp_path):
+    """Dates (26.11.2026) and times (11:29:59.691) sit on every row; they must not outvote the decimal commas."""
+    header = "Recording timestamp [ms]\tSensor\tRecording date\tRecording start time\tEvent\tGaze point X [MCS px]\tGaze point Y [MCS px]\tPupil diameter left [mm]\tPupil diameter right [mm]\tGyro X [°/s]\n"
+    rows = ["0\t\t20.11.2026\t11:29:59.691\tRecordingStart\t\t\t\t\t\n"]
+    for t in range(0, 400, 10):
+        rows.append(f"{t}\tEye Tracker\t20.11.2026\t11:29:59.691\t\t1020\t290\t3,904\t3,839\t\n")
+        rows += [f"{t + 3}\tGyroscope\t20.11.2026\t11:29:59.691\t\t\t\t\t\t-1,3300\n"] * 3
+    path = tmp_path / "export.tsv"
+    path.write_text(header + "".join(rows), encoding="utf-8")
+    raw = read_file(path, "tobii_prolab")[1]
+    assert raw.frame["Pupil diameter mean"].iloc[0] == pytest.approx(3.8715)
+
+
 def test_markers_follow_the_participant_name_used_for_the_samples(workspace):
     """The file is labelled P1 here, but the export names its participant P01: markers must end up with the samples."""
     runner, load = workspace(SHELF.read_bytes(), name="anything.tsv")
