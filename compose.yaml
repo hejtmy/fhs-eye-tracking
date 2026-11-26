@@ -2,7 +2,10 @@
 # Settings come from a .env file next to this one (see .env.example). Guide: docs/deployment.md
 services:
   gazelab:
-    build: .
+    build:
+      context: .
+      args:
+        POLARS_COMPAT: ${GAZELAB_POLARS_COMPAT:-0}
     image: gazelab:2
     restart: unless-stopped
     ports:

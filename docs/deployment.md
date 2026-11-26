@@ -97,6 +97,7 @@ All settings are environment variables, read from `.env` by Compose.
 | `GAZELAB_MAX_ROWS` | `3000000` | Most samples one dataset may contain. |
 | `GAZELAB_UPLOAD_TTL_HOURS` | `168` | Uploads are deleted this many hours after they were last used. `0` keeps them until you delete them. |
 | `GAZELAB_CACHE_STEPS` | `64` | Step results kept in memory per worker. |
+| `GAZELAB_POLARS_COMPAT` | `0` | `1` builds the image for older CPUs without AVX2. Somewhat slower; needs `--build`. |
 | `GAZELAB_DOMAIN`, `GAZELAB_USER`, `GAZELAB_PASSWORD_HASH` | none | Only for `compose.https.yaml`. |
 
 Outside Docker the same variables work, plus `GAZELAB_DATA_DIR` (where
@@ -163,4 +164,5 @@ only install code you trust.
 | “This dataset is no longer on the server” | The upload expired or the volume was deleted. Upload again; the pipeline is still in the browser. |
 | A step that came from a plug-in is “unknown” | The plug-in file is missing on this server or failed to load; see the log at start-up. |
 | Certificates are not issued | The domain does not point to this server, or ports 80/443 are blocked. `docker compose -f compose.yaml -f compose.https.yaml logs proxy` says which. |
+| Container is “unhealthy”, the log says “Missing required CPU features” and “Child process … died” | The CPU (or the VM's CPU type) lacks AVX2. In Proxmox set the VM's processor type to `host` and stop/start the VM. If the hardware itself is too old, set `GAZELAB_POLARS_COMPAT=1` in `.env` and run `docker compose up -d --build`. |
 | `port is already allocated` | Something else uses the port. Set another `GAZELAB_PORT` in `.env`. |

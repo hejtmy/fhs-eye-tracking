@@ -17,6 +17,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
+# POLARS_COMPAT=1 adds Polars' build for CPUs without AVX2 (older servers, some VM CPU types).
+# When installed, Polars uses it instead of the faster default build.
+ARG POLARS_COMPAT=0
+RUN if [ "$POLARS_COMPAT" = "1" ]; then \
+      pip install --no-cache-dir "polars-runtime-compat==$(python -c 'import importlib.metadata as m; print(m.version("polars"))')"; \
+    fi
 COPY gazelab/ gazelab/
 COPY server/ server/
 COPY examples/ examples/
